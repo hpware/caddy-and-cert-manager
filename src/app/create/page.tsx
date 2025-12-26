@@ -12,14 +12,11 @@ export default function Page() {
         async () => {
           const req = await fetch("/api/certs/generate", {
             method: "POST",
-            body: JSON.stringify(Object.fromEntries(data.entries())),
-            headers: {
-              "Content-Type": "application/json",
-            },
+            body: data,
           });
           const res = await req.json();
-          if (!res.success) {
-            throw new Error(res.error);
+          if (!res.ok) {
+            throw new Error(res.error || "Failed to generate certificate");
           }
           router.push(`/cert/${res.uuidSavePath}`);
         },
@@ -42,23 +39,34 @@ export default function Page() {
         }}
         className="flex flex-col items-center justify-center"
       >
-        <label htmlFor="cn">CN (Common Name):</label>
-        <input type="text" id="cn" name="cn" required />
+        <input type="hidden" name="mode" value="generate" />
 
-        <label htmlFor="ou">OU (Organizational Unit):</label>
-        <input type="text" id="ou" name="ou" />
+        <label htmlFor="Days">Certificate Validity (Days):</label>
+        <input
+          type="number"
+          id="Days"
+          name="Days"
+          defaultValue="365"
+          required
+        />
 
-        <label htmlFor="o">O (Organization Name):</label>
-        <input type="text" id="o" name="o" />
+        <label htmlFor="CN">CN (Common Name):</label>
+        <input type="text" id="CN" name="CN" required />
 
-        <label htmlFor="l">L (Locality):</label>
-        <input type="text" id="l" name="l" />
+        <label htmlFor="OU">OU (Organizational Unit):</label>
+        <input type="text" id="OU" name="OU" />
 
-        <label htmlFor="st">ST (State):</label>
-        <input type="text" id="st" name="st" />
+        <label htmlFor="O">O (Organization Name):</label>
+        <input type="text" id="O" name="O" />
 
-        <label htmlFor="c">C (Country):</label>
-        <input type="text" id="c" name="c" />
+        <label htmlFor="L">L (Locality):</label>
+        <input type="text" id="L" name="L" />
+
+        <label htmlFor="ST">ST (State):</label>
+        <input type="text" id="ST" name="ST" />
+
+        <label htmlFor="C">C (Country):</label>
+        <input type="text" id="C" name="C" />
 
         <button type="submit" disabled={handleSubmit.isPending}>
           Create
