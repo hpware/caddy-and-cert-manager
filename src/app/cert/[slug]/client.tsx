@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function Client({ slug }: { slug: string }) {
@@ -10,14 +11,10 @@ export default function Client({ slug }: { slug: string }) {
         <h2>Private Key</h2>
         <div className="flex flex-row gap-2">
           <Link href={`/api/certs/get_file/${slug}?type=private&get=download`}>
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-              Download
-            </button>
+            <Button>Download</Button>
           </Link>
           <Link href={`/api/certs/get_file/${slug}?type=private`}>
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-              View
-            </button>
+            <Button>View</Button>
           </Link>
         </div>
       </div>
@@ -25,14 +22,10 @@ export default function Client({ slug }: { slug: string }) {
         <h2>Public Key</h2>
         <div className="flex flex-row gap-2">
           <Link href={`/api/certs/get_file/${slug}?type=public&get=download`}>
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-              Download
-            </button>
+            <Button>Download</Button>
           </Link>
           <Link href={`/api/certs/get_file/${slug}?type=public`}>
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-              View
-            </button>
+            <Button>View</Button>
           </Link>
         </div>
       </div>
