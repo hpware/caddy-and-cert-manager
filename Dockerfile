@@ -6,9 +6,10 @@ RUN bun install
 RUN bun run build
 
 # prod
-FROM oven/bun:latest
+FROM oven/bun:debian
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y libssl-dev openssl
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 # Copy built application
