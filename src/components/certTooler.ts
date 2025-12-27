@@ -29,7 +29,7 @@ const spawnWithInput = (
   });
 };
 
-export a function generateCSR(
+export async function generateCSR(
   saveUUID: string = crypto.randomUUID(),
   commonName: string,
   organizationUnit: string,
