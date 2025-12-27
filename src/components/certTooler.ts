@@ -71,6 +71,7 @@ export async function generateCertificate(
       ["req", "-noout", "-text", "-in", "-"],
       csrText
       );
+    const tempSavePath = /tmp/${crypto.randomUUID()}.cnf;
     const sanMatch = getSAN.match(/Subject Alternative Name:.*\n\s*(.*)/);
     const extractedSans = sanMatch ? sanMatch[1].trim() : "";
 
