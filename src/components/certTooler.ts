@@ -65,13 +65,13 @@ export async function generateCertificate(
   generateDays: number,
   saveUUID: string = crypto.randomUUID()
 ) {
+  const tempSavePath = `/tmp/${crypto.randomUUID()}.cnf`;
   try {
     const { stdout: getSAN } = await spawnWithInput(
       "openssl",
       ["req", "-noout", "-text", "-in", "-"],
       csrText
       );
-    const tempSavePath = /tmp/${crypto.randomUUID()}.cnf;
     const sanMatch = getSAN.match(/Subject Alternative Name:.*\n\s*(.*)/);
     const extractedSans = sanMatch ? sanMatch[1].trim() : "";
 
@@ -107,7 +107,7 @@ export async function generateCertificate(
         "-days",
         generateDays.toString(),
         "-sha256",
-        ...(extractedSans ? ["-extfile", extFilePath] : [])
+        ...(extractedSans ? ["-extfile", tempSavePath] : [])
       ],
       csrText
     );
@@ -121,7 +121,7 @@ export async function generateCertificate(
     console.error(`generateCertificate failed: ${e}`);
     throw e;
   } finally {
-    if (fs.existsSync(extFilePath)) await fs.promise.unlink(extFilePath);
+    if (fs.existsSync(tempSavePath)) await fs.promise.unlink(tempSavePath);
   }
 }
 
