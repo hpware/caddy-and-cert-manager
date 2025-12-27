@@ -75,18 +75,24 @@ export async function generateCertificate(
     const sanMatch = getSAN.match(/Subject Alternative Name:.*\n\s*(.*)/);
     const extractedSans = sanMatch ? sanMatch[1].trim() : "";
 
-    let configContent = "";
+let configContent = "";
 
-    if (extractedSans) {
-      configContent = `subjectAltName = ${extractedSans}`;
-    } else {
-      // Fallback: Extract CN and format it as a DNS entry for the SAN field
-      const cnMatch = getSAN.match(/Subject:.*?CN\s?=\s?([^\s,+/]+)/);
-      const extractedCN = cnMatch ? cnMatch[1].trim() : "";
-      if (extractedCN) {
-        configContent = `subjectAltName = DNS:${extractedCN}`;
-      }
-    }
+if (extractedSans) {
+  // If the CSR already has SANs, OpenSSL usually formats them correctly
+  // (e.g., "DNS:domain.com, IP:1.2.3.4"). We can use them as is.
+  configContent = `subjectAltName = ${extractedSans}`;
+} else {
+  // Fallback to Common Name
+  const cnMatch = getSAN.match(/Subject:.*?CN\s?=\s?([^\s,+/]+)/);
+  let extractedCN = cnMatch ? cnMatch[1].trim() : "";
+  
+  // Remove brackets if it's an IPv6 address from the URL/CN
+  extractedCN = extractedCN.replace(/[\[\]]/g, "");
+
+  if (extractedCN) {
+    // Check if extractedCN is an IP address
+    const isIP = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(extractedCN) || 
+                 extractedCN.includes(":");
 
     // 2. Write temp config if we have SAN info
     if (configContent) {
