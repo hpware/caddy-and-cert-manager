@@ -93,8 +93,11 @@ if (extractedSans) {
     // Check if extractedCN is an IP address
     const isIP = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(extractedCN) || 
                  extractedCN.includes(":");
-
-    // 2. Write temp config if we have SAN info
+    
+    const prefix = isIP ? "IP" : "DNS";
+    configContent = `subjectAltName = ${prefix}:${extractedCN}`;
+  }
+}
     if (configContent) {
       await fs.promises.writeFile(tempSavePath, configContent);
     }
