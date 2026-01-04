@@ -1,5 +1,6 @@
 import { db } from "@/components/drizzle/db";
 import * as schema from "@/components/drizzle/schema";
+import { desc } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
 export const GET = async (req: NextRequest) => {
@@ -8,7 +9,7 @@ export const GET = async (req: NextRequest) => {
   const dbResult = await db
     .select()
     .from(schema.certificates)
-    .orderBy(schema.certificates.created_at)
+    .orderBy(desc(schema.certificates.created_at))
     .offset(offset)
     .limit(50);
   return Response.json({ data: dbResult, nextOffset: offset + 50 });

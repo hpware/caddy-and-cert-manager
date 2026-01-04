@@ -4,7 +4,11 @@ import { Highlight, themes } from "prism-react-renderer";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useMutation, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useInfiniteQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,9 +16,11 @@ import { useMemo } from "react";
 import Table from "@/components/table";
 import {
   CalendarSearch,
+  CloudSync,
   GlobeIcon,
   KeyRoundIcon,
   PlusCircle,
+  Trash2Icon,
 } from "lucide-react";
 import {
   Dialog,
@@ -55,6 +61,7 @@ export default function Page() {
     queryKey: ["masterCert"],
   });
   const router = useRouter();
+  const queryClient = useQueryClient();
   const handleSubmitCreate = useMutation({
     mutationFn: async (data: FormData) => {
       toast.promise(
@@ -276,6 +283,32 @@ export default function Page() {
     return getAllCerts.data?.pages.flatMap((i) => i.data);
   }, [getAllCerts]);
 
+  const invalidateQuery = () =>
+    queryClient.invalidateQueries({ queryKey: ["getAllCerts"] });
+
+  const deleteCert = useMutation({
+    mutationFn: async (data: any) => {
+      toast.promise(
+        async () => {
+          const req = await fetch("/api/certs", {
+            method: "DELETE",
+            body: JSON.stringify({
+              id: data,
+            }),
+          });
+          if (!req.ok) {
+            throw new Error(await req.text());
+          }
+          invalidateQuery();
+        },
+        {
+          loading: "Deleting...",
+          success: "Deleted!",
+          error: (e) => `Error deleting certificate: ${e.message}`,
+        }
+      );
+    },
+  });
   return (
     <div className="m-3">
       <h1 className="text-2xl font-bold">Certificate Manager</h1>
@@ -299,6 +332,16 @@ export default function Page() {
               </DialogContent>
             </Dialog>
           ))}
+          <Button
+            className="cursor-pointer hover:bg-accent group transition-all duration-300"
+            onClick={() => {
+              invalidateQuery();
+              toast.success("Data refreshed!");
+            }}
+          >
+            Refresh{" "}
+            <CloudSync className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
+          </Button>
         </div>
       </div>
       <Table
@@ -344,8 +387,20 @@ export default function Page() {
             cell: ({ row }) => (
               <div className="flex flex-row justify-center space-y-1">
                 <Link href={`/certs/view/${row.getValue("id")}`}>
-                  <Button>取得憑證</Button>
+                  <Button className="group">
+                    取得憑證{" "}
+                    <FileBadgeIcon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
+                  </Button>
                 </Link>
+                <Button
+                  className="group"
+                  onClick={() => {
+                    deleteCert.mutate(row.original.id);
+                  }}
+                >
+                  Delete{" "}
+                  <Trash2Icon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
+                </Button>
               </div>
             ),
           },
