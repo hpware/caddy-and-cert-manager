@@ -1,6 +1,6 @@
 services:
   cert-signer:
-    image: cert-signer:latest #ghcr.io/hpware/basic-cert-signer
+    image: ghcr.io/hpware/basic-cert-signer
     ports:
       - "3000:3000"
     volumes:

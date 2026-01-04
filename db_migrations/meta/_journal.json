@@ -15,6 +15,20 @@
       "when": 1767534699150,
       "tag": "0001_melted_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767535818335,
+      "tag": "0002_tiresome_havok",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1767537802331,
+      "tag": "0003_sparkling_vulture",
+      "breakpoints": true
     }
   ]
 }

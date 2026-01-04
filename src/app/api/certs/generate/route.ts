@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
-import * as certTool from "@/components/certTooler";
+import * as certTool from "@/components/core/certTooler";
+import { db } from "@/components/drizzle/db";
+import * as schema from "@/components/drizzle/schema";
 
 export const POST = async (request: NextRequest) => {
   const formData = await request.formData();
@@ -14,13 +16,23 @@ export const POST = async (request: NextRequest) => {
       O ? O.toString() : "BunCCR",
       L ? L.toString() : "Da-an District",
       ST ? ST.toString() : "Taipei City",
-      C ? C.toString() : "TW",
+      C ? C.toString() : "TW"
     );
+
+    // save into db
+    await db
+      .insert(schema.certificates)
+      .values({
+        id: saveUUID,
+        name: CN.toString(),
+        privateKey: true,
+      })
+      .execute();
 
     const cert = await certTool.generateCertificate(
       certCsrAndPrivateKey.csr,
       Number(Days),
-      saveUUID,
+      saveUUID
     );
     return Response.json({
       ok: true,
@@ -34,8 +46,17 @@ export const POST = async (request: NextRequest) => {
     const generateCert = await certTool.generateCertificate(
       await (CSR as File).text(),
       Number(Days),
-      saveUUID,
+      saveUUID
     );
+    // save into db
+    await db
+      .insert(schema.certificates)
+      .values({
+        id: saveUUID,
+        name: saveUUID,
+        privateKey: false,
+      })
+      .execute();
     return Response.json({
       ok: true,
       uuidSavePath: saveUUID,

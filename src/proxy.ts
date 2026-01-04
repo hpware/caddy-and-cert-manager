@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { auth } from "@/components/core/auth";
 
 export const config = {
   matcher: [
@@ -16,16 +15,5 @@ export const config = {
 };
 
 export default async function middleware(req: NextRequest) {
-  const url = req.nextUrl;
-  const header = await headers();
-  const session = await auth.api.getSession({
-    headers: header,
-  });
-  console.log(session?.user);
-  if (!session && url.basePath !== "/login") {
-    NextResponse.redirect(new URL("/login", req.url));
-  }
-  if (session?.user && url.basePath === "/login") {
-    NextResponse.redirect(new URL("/", req.url));
-  }
+  //   const url = req.nextUrl;
 }
