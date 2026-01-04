@@ -2,7 +2,7 @@ import Client from "./client";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Certificate View",
+  title: "Certificate View | Home Core",
 };
 export default async function Page(props: {
   params: Promise<{ slug: string }>;
