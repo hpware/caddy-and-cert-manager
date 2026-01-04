@@ -23,4 +23,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["drizzle-orm", "migrate", "&&", "bun", "start"]
+CMD ["bun", "db:migrate", "&&", "bun", "start"]

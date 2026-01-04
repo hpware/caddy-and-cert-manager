@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { auth } from "@/components/core/auth";
 
 export const config = {
   matcher: [
@@ -13,28 +15,17 @@ export const config = {
   ],
 };
 
-export default function middleware(req: NextRequest) {
+export default async function middleware(req: NextRequest) {
   const url = req.nextUrl;
-  const hostname = req.headers.get("host") || "";
-
-  // Define your domains
-  const coreTestDomain = process.env.NEXT_PUBLIC_CORE_URL!.replace(
-    /https?:\/\//,
-    ""
-  );
-  const ssoDomain = process.env.NEXT_PUBLIC_SSO_URL!.replace(/https?:\/\//, "");
-
-  // Determine the path prefix based on the hostname
-  let targetPath = "";
-  if (hostname.includes(coreTestDomain)) {
-    targetPath = `/core${url.pathname}`;
-  } else if (hostname.includes(ssoDomain)) {
-    targetPath = `/sso${url.pathname}`;
+  const header = await headers();
+  const session = await auth.api.getSession({
+    headers: header,
+  });
+  console.log(session?.user);
+  if (!session && url.basePath !== "/login") {
+    NextResponse.redirect(new URL("/login", req.url));
   }
-
-  // Rewrite to the internal folder
-  if (targetPath) {
-    return NextResponse.rewrite(new URL(targetPath, req.url));
+  if (session?.user && url.basePath === "/login") {
+    NextResponse.redirect(new URL("/", req.url));
   }
-  return NextResponse.rewrite(new URL("/route-not-found", req.url));
 }
