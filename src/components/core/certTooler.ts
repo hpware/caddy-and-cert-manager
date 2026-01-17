@@ -80,7 +80,7 @@ export async function generateCertificate(
     if (extractedSans) {
       // If the CSR already has SANs, OpenSSL usually formats them correctly
       // (e.g., "DNS:domain.com, IP:1.2.3.4"). We can use them as is.
-      configContent = `[v3_req]\nsubjectAltName = ${extractedSans}`;
+      configContent = `subjectAltName = ${extractedSans}`;
     } else {
       // Fallback to Common Name
       const cnMatch = getSAN.match(/Subject:.*?CN\s?=\s?([^\s,+/]+)/);
@@ -96,7 +96,7 @@ export async function generateCertificate(
           extractedCN.includes(":");
 
         const prefix = isIP ? "IP" : "DNS";
-        configContent = `[v3_req]\nsubjectAltName = ${prefix}:${extractedCN}`;
+        configContent = `subjectAltName = ${prefix}:${extractedCN}`;
       }
     }
     if (configContent) {
@@ -117,7 +117,8 @@ export async function generateCertificate(
         "-days",
         generateDays.toString(),
         "-sha256",
-        ...(extractedSans ? ["-extfile", tempSavePath] : []),
+        "-extfile",
+        tempSavePath,
       ],
       csrText,
     );

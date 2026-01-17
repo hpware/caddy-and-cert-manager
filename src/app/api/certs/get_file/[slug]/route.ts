@@ -4,13 +4,13 @@ import * as certTool from "@/components/core/certTooler";
 
 export const GET = async (
   request: NextRequest,
-  props: { params: Promise<{ slug: string }> }
+  props: { params: Promise<{ slug: string }> },
 ) => {
   try {
     const { slug } = await props.params;
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-        slug
+        slug,
       )
     ) {
       return new Response("Invalid slug", { status: 400 });
@@ -32,7 +32,7 @@ export const GET = async (
         `./certs/created/${slug}_${
           type === "public" ? "pub" : "private_key"
         }.pem`,
-        "utf8"
+        "utf8",
       );
     }
 
