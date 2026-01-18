@@ -1,13 +1,14 @@
 import { NextRequest } from "next/server";
 import { getHomeAssistantData } from "@/components/ipad_app/homeAssistant";
 
-interface RouteParams {
-  params: {
-    slug: string;
-  };
-}
-
-export const GET = async (request: NextRequest, { params }: RouteParams) => {
+export const GET = async (
+  request: NextRequest,
+  params2: Promise<{
+    params: {
+      slug: string;
+    };
+  }>,
+) => {
   try {
     // Check for authorization
     const bearer = request.headers.get("Authorization");
@@ -26,8 +27,8 @@ export const GET = async (request: NextRequest, { params }: RouteParams) => {
       );
     }
 
-    const { slug } = params;
-
+    const { params } = await params2;
+    const slug = params.slug;
     if (!slug) {
       return Response.json(
         {

@@ -65,7 +65,7 @@ export async function generateCertificate(
   generateDays: number,
   saveUUID: string = crypto.randomUUID(),
 ) {
-  const tempSavePath = `./certs/created/${saveUUID}.cnf`;
+  const tempSavePath = `/tmp/${saveUUID}.cnf`;
   try {
     const { stdout: getSAN } = await spawnWithInput(
       "openssl",

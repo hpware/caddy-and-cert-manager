@@ -1,13 +1,14 @@
 import { NextRequest } from "next/server";
 import { setHomeAssistantData } from "@/components/ipad_app/homeAssistant";
 
-interface RouteParams {
-  params: {
-    slug: string;
-  };
-}
-
-export const POST = async (request: NextRequest, { params }: RouteParams) => {
+export const POST = async (
+  request: NextRequest,
+  params2: Promise<{
+    params: {
+      slug: string;
+    };
+  }>,
+) => {
   try {
     // Check for authorization
     const bearer = request.headers.get("Authorization");
@@ -26,8 +27,8 @@ export const POST = async (request: NextRequest, { params }: RouteParams) => {
       );
     }
 
-    const { slug: device } = params;
-
+    const { params } = await params2;
+    const device = params.slug;
     if (!device) {
       return new Response("Device entity ID is required", {
         status: 400,
