@@ -3,11 +3,7 @@ import { setHomeAssistantData } from "@/components/ipad_app/homeAssistant";
 
 export const POST = async (
   request: NextRequest,
-  context: Promise<{
-    params: {
-      slug: string;
-    };
-  }>,
+  context: { params: Promise<{ slug: string }> },
 ) => {
   try {
     // Check for authorization
@@ -27,8 +23,7 @@ export const POST = async (
       );
     }
 
-    const { params } = await context;
-    const device = params.slug;
+    const { slug: device } = await context.params;
     if (!device) {
       return new Response("Device entity ID is required", {
         status: 400,
