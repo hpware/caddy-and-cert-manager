@@ -3,7 +3,7 @@ import { getHomeAssistantData } from "@/components/ipad_app/homeAssistant";
 
 export const GET = async (
   request: NextRequest,
-  params2: Promise<{
+  context: Promise<{
     params: {
       slug: string;
     };
@@ -27,7 +27,7 @@ export const GET = async (
       );
     }
 
-    const { params } = await params2;
+    const { params } = await context;
     const slug = params.slug;
     if (!slug) {
       return Response.json(
