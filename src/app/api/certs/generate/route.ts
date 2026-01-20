@@ -16,7 +16,7 @@ export const POST = async (request: NextRequest) => {
       O ? O.toString() : "BunCCR",
       L ? L.toString() : "Da-an District",
       ST ? ST.toString() : "Taipei City",
-      C ? C.toString() : "TW"
+      C ? C.toString() : "TW",
     );
 
     // save into db
@@ -32,13 +32,15 @@ export const POST = async (request: NextRequest) => {
     const cert = await certTool.generateCertificate(
       certCsrAndPrivateKey.csr,
       Number(Days),
-      saveUUID
+      saveUUID,
     );
+    const fullChainPath = await certTool.generateFullchain(saveUUID);
     return Response.json({
       ok: true,
       uuidSavePath: saveUUID,
       certPublicKey: cert,
       certPrivateKey: certCsrAndPrivateKey.privateKey,
+      fullChainPath,
     });
   } else if (mode === "csr") {
     const { CSR } = Object.fromEntries(formData);
@@ -46,7 +48,7 @@ export const POST = async (request: NextRequest) => {
     const generateCert = await certTool.generateCertificate(
       await (CSR as File).text(),
       Number(Days),
-      saveUUID
+      saveUUID,
     );
     // save into db
     await db
@@ -57,10 +59,13 @@ export const POST = async (request: NextRequest) => {
         privateKey: false,
       })
       .execute();
+    const fullChainPath = await certTool.generateFullchain(saveUUID);
     return Response.json({
       ok: true,
       uuidSavePath: saveUUID,
       certPublicKey: generateCert,
+      certPrivateKey: null,
+      fullChainPath,
     });
   }
   return Response.json({

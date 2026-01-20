@@ -1,0 +1,17 @@
+services:
+  caddy:
+    image: caddy:2.10.2
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+      - "443:443/udp"
+      - 2019:2019
+    volumes:
+      - ./caddy/conf:/etc/caddy
+      - ./caddy/site:/srv
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+      - ./certs/created:/certs
+    environment:
+      - CADDY_ADMIN=0.0.0.0:2019

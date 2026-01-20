@@ -24,17 +24,16 @@ export const GET = async (
 
     let getText: string;
 
-    if (type === "public_fullchain") {
-      // Generate fullchain on-demand
-      getText = await certTool.generateFullchain(slug);
-    } else {
-      getText = await fs.promises.readFile(
-        `./certs/created/${slug}_${
-          type === "public" ? "pub" : "private_key"
-        }.pem`,
-        "utf8",
-      );
-    }
+    getText = await fs.promises.readFile(
+      `./certs/created/${slug}_${
+        type === "public"
+          ? "pub"
+          : type === "private"
+            ? "private_key"
+            : "fullchain"
+      }.pem`,
+      "utf8",
+    );
 
     return new Response(getText, {
       headers: {
