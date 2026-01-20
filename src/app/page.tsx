@@ -9,8 +9,8 @@ const services = [
     icon: BadgeCheck,
   },
   {
-    name: "Proxy",
-    href: "/proxy",
+    name: "Web",
+    href: "/web",
     icon: Waypoints,
   },
 ];

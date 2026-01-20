@@ -3,7 +3,7 @@ import Client from "./client";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Proxy | Home Core",
+  title: "Web | Home Core",
 };
 
 export default function Page() {
