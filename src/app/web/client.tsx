@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import Table from "@/components/table";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -17,14 +17,30 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 export default function Client() {
   const [currentTabStatus, setCurrentTabStatus] = useState<string>("files");
+  const [sslCertType, setSslCertType] = useState<string>("homecert");
+  const [currentAddServiceOpenPanel, setCurrentAddServiceOpenPanel] =
+    useState<boolean>(false);
+  const submitRequest = (e: FormEvent) => {
+    e.preventDefault();
+
+    toast.promise(async () => {}, {
+      loading: "Saving configuration...",
+      success: "Configuration Created!",
+      error: (e) => `Error: ${e.message}`,
+    });
+  };
   return (
     <div className="m-3">
       <h1 className="text-2xl font-bold">Proxy Services</h1>
       <div className="flex flex-col md:flex-row justify-between pb-2">
         <span></span>
-        <Dialog>
+        <Dialog
+          open={currentAddServiceOpenPanel}
+          onOpenChange={setCurrentAddServiceOpenPanel}
+        >
           <DialogTrigger>
             <Button className="cursor-pointer hover:bg-accent group transition-all duration-300">
               Add Service{" "}
@@ -38,7 +54,7 @@ export default function Client() {
                 Add a new service to the proxy or webserver.
               </DialogDescription>
             </DialogHeader>
-            <form>
+            <form onSubmit={submitRequest}>
               <div>
                 <Tabs
                   value={currentTabStatus}
@@ -52,16 +68,22 @@ export default function Client() {
                 <Label htmlFor="name" className="pt-2 pb-1">
                   Name
                 </Label>
-                <Input id="name" placeholder="Service Name" required />
+                <Input
+                  id="name"
+                  placeholder="Service Name"
+                  required
+                  type="text"
+                />
                 <Label htmlFor="publicURL" className="pt-2 pb-1">
                   Public URL (optional)
                 </Label>
-                <Input id="publicURL" placeholder="example.com" />
+                <Input id="publicURL" placeholder="example.com" type="text" />
                 <Label htmlFor="sslType" className="pt-2 pb-1">
                   SSL Type
                 </Label>
-                <Input id="sslType" hidden value="" />
-                <Tabs defaultValue="homecert">
+                <Input id="sslType" hidden value={sslCertType} type="text" />
+                <Tabs value={sslCertType} onValueChange={setSslCertType}>
+                  {" "}
                   <TabsList>
                     <TabsTrigger value="homecert">Home Cert</TabsTrigger>
                     <TabsTrigger value="letsencrypt">Let's Encrypt</TabsTrigger>
@@ -73,7 +95,7 @@ export default function Client() {
                     <Label htmlFor="files" className="pt-2 pb-1">
                       Upload web files (requires .zip)
                     </Label>
-                    <Input type="file" id="files" required />
+                    <Input type="file" id="files" required accept=".zip" />
                   </>
                 ) : (
                   <>
