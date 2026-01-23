@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import Providers from "./providers";
 import "./globals.css";
+import NavBar from "./navBar";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
       >
+        <NavBar />
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -19,3 +19,5 @@ export async function uploadWebHostFilesToServer(
   );
   await execAsync(`unzip ${tmpFolder}archive.zip -d ${srvFolder}`);
 }
+
+export async function AddService() {}
