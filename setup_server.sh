@@ -25,6 +25,7 @@ tee ./caddy/caddy/conf/Caddyfile <<EOF
 }
 :443 {
         tls /certs/default.fullchain.pem /certs/default.private_key.pem
+
         root * /usr/share/caddy
         file_server
 }

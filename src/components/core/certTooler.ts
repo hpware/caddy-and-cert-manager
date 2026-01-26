@@ -47,19 +47,14 @@ export async function generateCertificate(
     const extractedSans = sanMatch ? sanMatch[1].trim() : "";
 
     let configContent = "";
-
+    const cnMatch = getSAN.match(/Subject:.*?CN\s?=\s?([^\s,+/]+)/);
+    let extractedCN = cnMatch ? cnMatch[1].trim() : "";
+    extractedCN = extractedCN.replace(/[\[\]]/g, "");
     if (extractedSans) {
       // If the CSR already has SANs, OpenSSL usually formats them correctly
       // (e.g., "DNS:domain.com, IP:1.2.3.4"). We can use them as is.
       configContent = `subjectAltName = ${extractedSans}`;
     } else {
-      // Fallback to Common Name
-      const cnMatch = getSAN.match(/Subject:.*?CN\s?=\s?([^\s,+/]+)/);
-      let extractedCN = cnMatch ? cnMatch[1].trim() : "";
-
-      // Remove brackets if it's an IPv6 address from the URL/CN
-      extractedCN = extractedCN.replace(/[\[\]]/g, "");
-
       if (extractedCN) {
         // Check if extractedCN is an IP address
         const isIP =
@@ -98,7 +93,7 @@ export async function generateCertificate(
     await fs.promises.mkdir("./certs/created", { recursive: true });
 
     await fs.promises.writeFile(savePath, termGenerate.stdout);
-    return savePath;
+    return { pb: savePath, itemCN: extractedCN };
   } catch (e) {
     console.error(`generateCertificate failed: ${e}`);
     throw e;

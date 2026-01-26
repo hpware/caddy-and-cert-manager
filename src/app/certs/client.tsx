@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Highlight, themes } from "prism-react-renderer";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useMutation,
   useInfiniteQuery,
@@ -19,7 +19,7 @@ import {
   CloudSync,
   GlobeIcon,
   KeyRoundIcon,
-  PlusCircle,
+  Trash,
   Trash2Icon,
 } from "lucide-react";
 import {
@@ -28,9 +28,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogOverlay,
   DialogTitle,
-  DialogPortal,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -42,9 +40,13 @@ import {
   FileBadgeIcon,
   PenLine,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 
 export default function Page() {
-  const [openMasterCertView, setOpenMasterCertView] = useState(false);
+  const [dialogStatus, setDialogStatus] = useState<string>("easy");
+  const [easySync, setEasySync] = useState({});
   const getMasterCert = useQuery({
     queryFn: async () => {
       try {
@@ -79,7 +81,7 @@ export default function Page() {
         {
           success: "Certificate created successfully!",
           error: "Failed to create certificate",
-        }
+        },
       );
     },
   });
@@ -100,14 +102,14 @@ export default function Page() {
         {
           success: "Certificate created successfully!",
           error: "Failed to create certificate",
-        }
+        },
       );
     },
   });
   const dialogStuff = [
     {
       icon: BadgePlusIcon,
-      title: "Make Certificate",
+      title: "Create Certificate",
       description:
         "Please provide the necessary information to make a certificate request.",
       reactLogic: (
@@ -119,9 +121,20 @@ export default function Page() {
           }}
           className="space-y-2"
         >
-          <Input type="hidden" name="mode" value="generate" />
+          <Tabs value={dialogStatus} onValueChange={setDialogStatus}>
+            <TabsList>
+              <TabsTrigger value="easy">Easy</TabsTrigger>
+              <TabsTrigger value="csr">CSR</TabsTrigger>
+              <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Input type="hidden" name="mode" value={dialogStatus} />
 
-          <Label htmlFor="Days">Certificate Validity (Days):</Label>
+          <Label htmlFor="Days">
+            {dialogStatus === "easy"
+              ? "How long do you want this certificate to last?"
+              : "Certificate Validity (Days):"}
+          </Label>
           <Input
             type="number"
             id="Days"
@@ -129,71 +142,57 @@ export default function Page() {
             defaultValue="365"
             required
           />
+          {dialogStatus === "easy" ? (
+            <>
+              <Label htmlFor="CN">Your Domain or IP Addresses:</Label>
+              <Input type="" id="CN" name="CN" required />
+              <Input type="text" id="O" name="O" value="N/A" hidden />
+              <Input type="text" id="OU" name="OU" value="N/A" hidden />
 
-          <Label htmlFor="CN">CN (Common Name):</Label>
-          <Input type="text" id="CN" name="CN" required />
+              <Label htmlFor="L">Your City or State:</Label>
+              <Input type="text" id="L" name="L" value="" />
+              <Input type="text" id="ST" name="ST" value="" hidden />
 
-          <Label htmlFor="OU">OU (Organizational Unit):</Label>
-          <Input type="text" id="OU" name="OU" />
+              <Label htmlFor="C">Your Country's Code (Ex: US, UK, TW)</Label>
+              <Input type="text" id="C" name="C" />
+            </>
+          ) : dialogStatus === "advanced" ? (
+            <>
+              <Label htmlFor="CN">CN (Common Name):</Label>
+              <Input type="text" id="CN" name="CN" required />
 
-          <Label htmlFor="O">O (Organization Name):</Label>
-          <Input type="text" id="O" name="O" />
+              <Label htmlFor="OU">OU (Organizational Unit):</Label>
+              <Input type="text" id="OU" name="OU" />
 
-          <Label htmlFor="L">L (Locality):</Label>
-          <Input type="text" id="L" name="L" />
+              <Label htmlFor="O">O (Organization Name):</Label>
+              <Input type="text" id="O" name="O" />
 
-          <Label htmlFor="ST">ST (State):</Label>
-          <Input type="text" id="ST" name="ST" />
+              <Label htmlFor="L">L (Locality):</Label>
+              <Input type="text" id="L" name="L" />
 
-          <Label htmlFor="C">C (Country):</Label>
-          <Input type="text" id="C" name="C" />
+              <Label htmlFor="ST">ST (State):</Label>
+              <Input type="text" id="ST" name="ST" />
+
+              <Label htmlFor="C">C (Country):</Label>
+              <Input type="text" id="C" name="C" />
+
+              <div className="flex items-center space-x-3">
+                <Label htmlFor="revokable">Revokable</Label>
+                <input type="checkbox" id="revokable" name="revokable" />
+              </div>
+            </>
+          ) : dialogStatus === "csr" ? (
+            <>
+              <Label htmlFor="CSR">CSR (Certificate Signing Request):</Label>
+              <Input type="file" id="CSR" name="CSR" required />
+            </>
+          ) : null}
 
           <DialogFooter>
             <Button
               onClick={() => {}}
               className="group mt-3"
               disabled={handleSubmitCreate.isPending}
-              type="submit"
-            >
-              Sign{" "}
-              <PenLine className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
-            </Button>
-          </DialogFooter>
-        </form>
-      ),
-    },
-    {
-      icon: BadgeInfoIcon,
-      title: "Request Certificate",
-      description:
-        "Please provide the necessary information to make a certificate request.",
-      reactLogic: (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            handleSubmitCSR.mutate(formData);
-          }}
-          className="space-y-2"
-        >
-          <Input type="hidden" name="mode" value="csr" />
-
-          <Label htmlFor="Days">Certificate Validity (Days):</Label>
-          <Input
-            type="number"
-            id="Days"
-            name="Days"
-            defaultValue="365"
-            required
-          />
-          <Label htmlFor="CSR">CSR (Certificate Signing Request):</Label>
-          <Input type="file" id="CSR" name="CSR" required />
-
-          <DialogFooter>
-            <Button
-              onClick={() => {}}
-              className="group mt-3"
-              disabled={handleSubmitCSR.isPending}
               type="submit"
             >
               Sign{" "}
@@ -279,6 +278,7 @@ export default function Page() {
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => lastPage.nextOffset,
   });
+
   const memoedData = useMemo(() => {
     return getAllCerts.data?.pages.flatMap((i) => i.data);
   }, [getAllCerts]);
@@ -305,7 +305,7 @@ export default function Page() {
           loading: "Deleting...",
           success: "Deleted!",
           error: (e) => `Error deleting certificate: ${e.message}`,
-        }
+        },
       );
     },
   });
@@ -372,12 +372,12 @@ export default function Page() {
             accessorKey: "privateKey",
             header: () => (
               <div className="flex items-center gap-2">
-                <KeyRoundIcon className="w-4 h-4" /> 是否持有密鑰
+                <KeyRoundIcon className="w-4 h-4" /> is CSR?
               </div>
             ),
             cell: ({ row }) => (
               <span className={row.getValue("privateKey") ? "text-bold" : ""}>
-                {row.getValue("privateKey") ? "是" : "否"}
+                {row.getValue("privateKey") ? "No" : "Yes"}
               </span>
             ),
           },
@@ -407,6 +407,19 @@ export default function Page() {
         ]}
         data={memoedData || []}
       />
+      <div className="flex justify-center pt-3">
+        {getAllCerts.isFetchingNextPage ? (
+          <Button disabled>Loading...</Button>
+        ) : (
+          <Button
+            onClick={() => {
+              getAllCerts.fetchNextPage();
+            }}
+          >
+            Index More
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

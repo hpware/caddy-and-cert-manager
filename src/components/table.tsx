@@ -22,7 +22,12 @@ interface DataTableProps<TData, TValue> {
 export default function DataTable<TData, TValue>({
   columns,
   data,
-}: DataTableProps<TData, TValue>) {
+  className,
+}: {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  className?: string;
+}) {
   const table = useReactTable({
     data,
     columns,
@@ -30,7 +35,7 @@ export default function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="overflow-hidden rounded-md border">
+    <div className={`overflow-hidden rounded-md border ${className}`}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

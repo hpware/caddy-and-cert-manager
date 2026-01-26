@@ -6,7 +6,7 @@ import * as schema from "@/components/drizzle/schema";
 export const POST = async (request: NextRequest) => {
   const formData = await request.formData();
   const { mode, Days } = Object.fromEntries(formData);
-  if (mode === "generate") {
+  if (mode === "easy") {
     const { CN, OU, O, L, ST, C } = Object.fromEntries(formData);
     const saveUUID = crypto.randomUUID();
     const certCsrAndPrivateKey = await certTool.generateCSR(
@@ -38,7 +38,7 @@ export const POST = async (request: NextRequest) => {
     return Response.json({
       ok: true,
       uuidSavePath: saveUUID,
-      certPublicKey: cert,
+      certPublicKey: cert.pb,
       certPrivateKey: certCsrAndPrivateKey.privateKey,
       fullChainPath,
     });
@@ -55,7 +55,7 @@ export const POST = async (request: NextRequest) => {
       .insert(schema.certificates)
       .values({
         id: saveUUID,
-        name: saveUUID,
+        name: generateCert.itemCN,
         privateKey: false,
       })
       .execute();
@@ -63,7 +63,7 @@ export const POST = async (request: NextRequest) => {
     return Response.json({
       ok: true,
       uuidSavePath: saveUUID,
-      certPublicKey: generateCert,
+      certPublicKey: generateCert.pb,
       certPrivateKey: null,
       fullChainPath,
     });
