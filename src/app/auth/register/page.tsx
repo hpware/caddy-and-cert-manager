@@ -11,9 +11,9 @@ export default async function Page() {
     .where(eq(kvData.key, "setup-completed"))
     .execute();
 
-  if (checkIfSetupCompleted[0].value === true) {
+  if (checkIfSetupCompleted[0].value === false) {
     return <Client />;
   }
-  redirect("/auth/register");
+  redirect("/auth/login");
   return null;
 }

@@ -526,7 +526,7 @@ export default function Page() {
               <div className="flex flex-row justify-center space-y-1">
                 <Link href={`/certs/view/${row.getValue("id")}`}>
                   <Button className="group">
-                    取得憑證{" "}
+                    Obtain{" "}
                     <FileBadgeIcon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
                   </Button>
                 </Link>

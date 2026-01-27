@@ -10,6 +10,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
+    "db:create": "name=$(openssl rand -hex 12) && drizzle-kit generate --custom --name=$name",
     "auth:generate": "bunx @better-auth/cli@latest generate --config ./src/components/auth.ts && echo \"Please copy auth-schema.ts's data into schema.ts below the \"{/** Core Services */}\" section\""
   },
   "dependencies": {
