@@ -10,7 +10,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "auth:generate": "bunx @better-auth/cli@latest generate --config ./src/components/core/auth.ts && echo \"Please copy auth-schema.ts's data into schema.ts below the \"{/** Core Services */}\" section\""
+    "auth:generate": "bunx @better-auth/cli@latest generate --config ./src/components/auth.ts && echo \"Please copy auth-schema.ts's data into schema.ts below the \"{/** Core Services */}\" section\""
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
@@ -18,7 +18,7 @@
     "@tabler/icons-react": "^3.36.0",
     "@tanstack/react-query": "^5.90.16",
     "@tanstack/react-table": "^8.21.3",
-    "better-auth": "^1.4.10",
+    "better-auth": "^1.4.17",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",

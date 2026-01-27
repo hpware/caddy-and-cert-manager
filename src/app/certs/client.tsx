@@ -46,7 +46,15 @@ import { Separator } from "@/components/ui/separator";
 
 export default function Page() {
   const [dialogStatus, setDialogStatus] = useState<string>("easy");
-  const [easySync, setEasySync] = useState({});
+  const [easySync, setEasySync] = useState({
+    city: "",
+    country: "TW",
+    commonName: "",
+    organization: "",
+    organizationUnit: "",
+    locality: "",
+    revokable: true,
+  });
   const getMasterCert = useQuery({
     queryFn: async () => {
       try {
@@ -65,27 +73,6 @@ export default function Page() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const handleSubmitCreate = useMutation({
-    mutationFn: async (data: FormData) => {
-      toast.promise(
-        async () => {
-          const req = await fetch("/api/certs/generate", {
-            method: "POST",
-            body: data,
-          });
-          const res = await req.json();
-          if (!res.ok) {
-            throw new Error(res.error || "Failed to generate certificate");
-          }
-          router.push(`/certs/view/${res.uuidSavePath}`);
-        },
-        {
-          success: "Certificate created successfully!",
-          error: "Failed to create certificate",
-        },
-      );
-    },
-  });
-  const handleSubmitCSR = useMutation({
     mutationFn: async (data: FormData) => {
       toast.promise(
         async () => {
@@ -145,46 +132,182 @@ export default function Page() {
           {dialogStatus === "easy" ? (
             <>
               <Label htmlFor="CN">Your Domain or IP Addresses:</Label>
-              <Input type="" id="CN" name="CN" required />
-              <Input type="text" id="O" name="O" value="N/A" hidden />
-              <Input type="text" id="OU" name="OU" value="N/A" hidden />
+              <Input
+                type=""
+                id="CN"
+                name="CN"
+                required
+                value={easySync.commonName}
+                onChange={(e) => {
+                  setEasySync({ ...easySync, commonName: e.target.value });
+                }}
+              />
+
+              <Label htmlFor="O">Your Organization:</Label>
+              <Input
+                type="text"
+                id="O"
+                name="O"
+                value={easySync.organization}
+                onChange={(e) => {
+                  setEasySync({ ...easySync, organization: e.target.value });
+                }}
+              />
+              <Input
+                type="text"
+                id="OU"
+                name="OU"
+                value={easySync.organization}
+                hidden
+              />
 
               <Label htmlFor="L">Your City or State:</Label>
-              <Input type="text" id="L" name="L" value="" />
-              <Input type="text" id="ST" name="ST" value="" hidden />
+              {/* ST and L both are the same value and synced! */}
+              <Input
+                type="text"
+                id="L"
+                name="L"
+                value={easySync.city}
+                onChange={(e) => {
+                  setEasySync({ ...easySync, city: e.target.value });
+                }}
+              />
+              <Input
+                type="text"
+                id="ST"
+                name="ST"
+                value={easySync.city}
+                hidden
+              />
 
-              <Label htmlFor="C">Your Country's Code (Ex: US, UK, TW)</Label>
-              <Input type="text" id="C" name="C" />
+              {/** 選擇國家，限制兩位英文 */}
+              <Label htmlFor="C">Your Country's Code (Ex: US, UK, TW):</Label>
+              <Input
+                type="text"
+                id="C"
+                name="C"
+                value={easySync.country}
+                onChange={(e) => {
+                  if (e.target.value.length <= 2) {
+                    setEasySync({
+                      ...easySync,
+                      country: e.target.value.toUpperCase(),
+                    });
+                  }
+                }}
+              />
+              <input
+                type="checkbox"
+                id="revokable"
+                name="revokable"
+                hidden
+                value={1}
+              />
             </>
           ) : dialogStatus === "advanced" ? (
             <>
               <Label htmlFor="CN">CN (Common Name):</Label>
-              <Input type="text" id="CN" name="CN" required />
-
-              <Label htmlFor="OU">OU (Organizational Unit):</Label>
-              <Input type="text" id="OU" name="OU" />
+              <Input
+                type="text"
+                id="CN"
+                name="CN"
+                required
+                value={easySync.commonName}
+                onChange={(e) => {
+                  setEasySync({
+                    ...easySync,
+                    commonName: e.target.value,
+                  });
+                }}
+              />
 
               <Label htmlFor="O">O (Organization Name):</Label>
-              <Input type="text" id="O" name="O" />
+              <Input
+                type="text"
+                id="O"
+                name="O"
+                value={easySync.organization}
+                onChange={(e) => {
+                  setEasySync({ ...easySync, organization: e.target.value });
+                }}
+              />
+
+              <Label htmlFor="OU">OU (Organizational Unit):</Label>
+              <Input
+                type="text"
+                id="OU"
+                name="OU"
+                value={easySync.organizationUnit}
+                onChange={(e) => {
+                  setEasySync({
+                    ...easySync,
+                    organizationUnit: e.target.value,
+                  });
+                }}
+              />
 
               <Label htmlFor="L">L (Locality):</Label>
-              <Input type="text" id="L" name="L" />
+              <Input
+                type="text"
+                id="L"
+                name="L"
+                value={easySync.locality}
+                onChange={(e) => {
+                  setEasySync({ ...easySync, locality: e.target.value });
+                }}
+              />
 
               <Label htmlFor="ST">ST (State):</Label>
-              <Input type="text" id="ST" name="ST" />
+              <Input
+                type="text"
+                id="ST"
+                name="ST"
+                value={easySync.city} // STOP!!! FUCK STOP CHANGING IT TO STATE
+                onChange={(e) => {
+                  setEasySync({ ...easySync, city: e.target.value }); // don't fucking change it to state Zed autocompelete!!!!
+                }}
+              />
 
               <Label htmlFor="C">C (Country):</Label>
-              <Input type="text" id="C" name="C" />
+              <Input
+                type="text"
+                id="C"
+                name="C"
+                value={easySync.country}
+                onChange={(e) => {
+                  if (e.target.value.length <= 2) {
+                    setEasySync({
+                      ...easySync,
+                      country: e.target.value.toUpperCase(),
+                    });
+                  }
+                }}
+              />
 
               <div className="flex items-center space-x-3">
                 <Label htmlFor="revokable">Revokable</Label>
-                <input type="checkbox" id="revokable" name="revokable" />
+                <input
+                  type="checkbox"
+                  id="revokable"
+                  name="revokable"
+                  value={easySync.revokable ? 1 : 0}
+                  onChange={(e) =>
+                    setEasySync({ ...easySync, revokable: e.target.checked })
+                  }
+                />
               </div>
             </>
           ) : dialogStatus === "csr" ? (
             <>
               <Label htmlFor="CSR">CSR (Certificate Signing Request):</Label>
               <Input type="file" id="CSR" name="CSR" required />
+              <input
+                type="checkbox"
+                id="revokable"
+                name="revokable"
+                hidden
+                value={1}
+              />
             </>
           ) : null}
 
