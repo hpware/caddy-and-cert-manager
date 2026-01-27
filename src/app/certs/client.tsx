@@ -39,9 +39,17 @@ import {
   PenLine,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Page() {
   const [dialogStatus, setDialogStatus] = useState<string>("easy");
+  const [openTabList, setOpenTabList] = useState<string>("server");
   const [easySync, setEasySync] = useState({
     city: "",
     country: "TW",
@@ -433,7 +441,17 @@ export default function Page() {
     <div className="m-3">
       <h1 className="text-2xl font-bold">Certificate Manager</h1>
       <div className="flex flex-col md:flex-row justify-between pb-2">
-        <div></div>
+        <div>
+          <Select>
+            <SelectTrigger>
+              <SelectValue placeholder="Easy" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="easy">Easy</SelectItem>
+              <SelectItem value="advanced">Advanced</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="auto-cols-fr gap-4 justify-center">
           {dialogStuff.map((i) => (
             <Dialog key={i.title}>
