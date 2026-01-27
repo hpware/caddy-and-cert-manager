@@ -1,5 +1,7 @@
+"use client";
 import Link from "next/link";
 import { BadgeCheck, BracketsIcon, LogOutIcon, Waypoints } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 const services = [
   {
@@ -15,6 +17,10 @@ const services = [
 ];
 
 export default function NavBar() {
+  const pathname = usePathname();
+  if (pathname.startsWith("/auth/")) {
+    return null;
+  }
   return (
     <>
       <div className="absolute inset-x-0 flex flex-row justify-between text-center z-30 rounded-lg border bg-accent/5 p-2 mx-2 my-1">
