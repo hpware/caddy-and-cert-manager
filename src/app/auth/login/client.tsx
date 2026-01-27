@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FileKey } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 
 export default function Client() {
@@ -11,6 +12,18 @@ export default function Client() {
         <div className="flex flex-col space-y-2 gap-2 p-5">
           <FileKey className="w-12 h-12" />
           <h1>Login Portal</h1>
+          <span className="break text-xs text-muted-foreground">
+            By logging in,
+            <br />
+            you agree to{" "}
+            <Link
+              href="https://github.com/hpware/caddy-and-cert-manager/blob/master/LICENSE"
+              className="underline hover:text-primary transition-all duration-300"
+            >
+              the project's license
+            </Link>
+            .
+          </span>
         </div>
         <form
           className="flex flex-col space-y-2 gap-2 p-5"
