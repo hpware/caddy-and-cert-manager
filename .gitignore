@@ -40,4 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
 auth-schema.ts
+
+.gitignore_*

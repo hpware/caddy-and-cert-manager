@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Highlight, themes } from "prism-react-renderer";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   useMutation,
   useInfiniteQuery,
@@ -19,7 +19,6 @@ import {
   CloudSync,
   GlobeIcon,
   KeyRoundIcon,
-  Trash,
   Trash2Icon,
 } from "lucide-react";
 import {
@@ -33,7 +32,6 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  BadgeInfoIcon,
   BadgePlusIcon,
   ClipboardIcon,
   Download,
@@ -41,8 +39,6 @@ import {
   PenLine,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 
 export default function Page() {
   const [dialogStatus, setDialogStatus] = useState<string>("easy");
@@ -290,6 +286,7 @@ export default function Page() {
                   type="checkbox"
                   id="revokable"
                   name="revokable"
+                  defaultChecked={true}
                   value={easySync.revokable ? 1 : 0}
                   onChange={(e) =>
                     setEasySync({ ...easySync, revokable: e.target.checked })
