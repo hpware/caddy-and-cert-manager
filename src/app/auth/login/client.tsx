@@ -33,58 +33,63 @@ export default function Client() {
             .
           </span>
         </div>
-        <form
-          className="flex flex-col space-y-2 gap-2 p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            toast.promise(
-              async () => {
-                const formData = new FormData(e.target as HTMLFormElement);
-                const email = formData.get("email") as string;
-                const password = formData.get("password") as string;
-                const submitUserInfo = await authClient.signIn.email({
-                  email,
-                  password,
-                });
-                if (submitUserInfo.error) {
-                  throw new Error(submitUserInfo.error.message);
-                }
-                router.push("/");
+        <div className="flex flex-col space-y-2 gap-2 p-5">
+          <form
+            className="flex flex-col space-y-2 gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              toast.promise(
+                async () => {
+                  const formData = new FormData(e.target as HTMLFormElement);
+                  const email = formData.get("email") as string;
+                  const password = formData.get("password") as string;
+                  const submitUserInfo = await authClient.signIn.email({
+                    email,
+                    password,
+                  });
+                  if (submitUserInfo.error) {
+                    throw new Error(submitUserInfo.error.message);
+                  }
+                  router.push("/");
 
-                return {
-                  user: submitUserInfo.data.user.name ?? "unknown user",
-                };
-              },
-              {
-                loading: "Logging you in...",
-                success: (last) => `You are logged in as ${last.user}`,
-                error: (e) => `Failed Reason: ${e.message}`,
-              },
-            );
-          }}
-        >
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              type="text"
-              id="email"
-              name="email"
-              placeholder="Email"
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              type="password"
-              id="password"
-              name="password"
-              placeholder="Password"
-              required
-            />
-          </div>
-          <Button type="submit">Login</Button>
-        </form>
+                  return {
+                    user: submitUserInfo.data.user.name ?? "unknown user",
+                  };
+                },
+                {
+                  loading: "Logging you in...",
+                  success: (last) => `You are logged in as ${last.user}`,
+                  error: (e) => `Failed Reason: ${e.message}`,
+                },
+              );
+            }}
+          >
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                type="text"
+                id="email"
+                name="email"
+                placeholder="Email"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Password"
+                required
+              />
+            </div>
+            <Button type="submit">Login</Button>
+          </form>
+          <Link href="/guest-resources">
+            <Button className="py-2 px-4">Access to Guest Resources</Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

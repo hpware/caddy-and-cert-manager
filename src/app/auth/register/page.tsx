@@ -15,5 +15,4 @@ export default async function Page() {
     return <Client />;
   }
   redirect("/auth/login");
-  return null;
 }
