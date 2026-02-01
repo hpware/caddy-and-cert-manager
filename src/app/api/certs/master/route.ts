@@ -1,3 +1,4 @@
+import randomString from "@/components/randomString";
 import { NextRequest } from "next/server";
 import fs from "node:fs";
 
@@ -20,7 +21,11 @@ export const GET = async (request: NextRequest) => {
       },
     });
   } catch (e) {
-    console.error(e);
-    return new Response("Error", { status: 500 });
+    const errorId = randomString();
+    console.error(`[ERRID: ${errorId}] ${e}`);
+    return new Response(
+      `Internal Server Error, please view server logs for more info. ERRID: ${errorId}`,
+      { status: 500 },
+    );
   }
 };
