@@ -21,3 +21,7 @@ POST /acme/new-account HTTP/1.1
      "signature": "RZPOnYoPs1PhjszF...-nh6X1qtOFPB519I"
    }
 */
+
+export const POST = async () => {
+  return new Response("Not implemented", { status: 501 });
+};

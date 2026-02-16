@@ -20,12 +20,20 @@ export const certificates = pgTable("certificates", {
 
 export const proxy = pgTable("proxy", {
   id: uuid("id").primaryKey().notNull(),
-  publicUrls: jsonb("public_urls").notNull().array().default([]),
-  certificateOrigin: text("certificate_origin").notNull(),
+  name: text("name").notNull(),
+  serviceType: text("service_type").notNull().default("proxy"), // "proxy" | "files"
+  publicUrls: jsonb("public_urls").notNull().default([]),
+  certificateOrigin: text("certificate_origin").notNull(), // "homecert" | "letsencrypt_http" | "letsencrypt_dns" | "custom"
+  certificateId: uuid("certificate_id"),
+  customCertPath: text("custom_cert_path"),
+  customKeyPath: text("custom_key_path"),
+  listenPort: integer("listen_port").notNull().default(443),
+  listenProtocol: text("listen_protocol").notNull().default("https"),
+  fileServePath: text("file_serve_path"),
   otherSettings: text("other_settings").notNull().default("{}"),
   allowWebsocket: boolean("allow_websocket").notNull().default(false),
   cacheAssets: boolean("cache_assets").notNull().default(false),
-  proxyHostUrl: text("proxy_host_url").notNull(),
+  proxyHostUrl: text("proxy_host_url").notNull().default(""),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });

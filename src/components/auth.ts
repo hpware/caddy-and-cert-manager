@@ -29,7 +29,7 @@ export const auth = betterAuth({
     }),
     after: createAuthMiddleware(async (ctx) => {
       if (ctx.path === "/sign-up/email") {
-        if (ctx.context.returned?.status !== undefined) {
+        if ((ctx.context.returned as any)?.status !== undefined) {
           return;
         }
         await db
