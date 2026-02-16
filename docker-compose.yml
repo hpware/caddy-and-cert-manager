@@ -5,10 +5,15 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://cert_user:cert_password@postgres:5432/cert_db
+      CADDY_API_SERVER: http://caddy:2019
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      caddy:
+        condition: service_started
     volumes:
       - ./certs:/app/certs
+
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -26,5 +31,22 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
+  caddy:
+    image: caddy:2.10.2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+      - "2019:2019"
+    environment:
+      CADDY_ADMIN: "0.0.0.0:2019"
+    volumes:
+      - ./caddy/conf:/etc/caddy
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+      - ./certs/created:/certs
+
 volumes:
   postgres-data:
+  host-files:
