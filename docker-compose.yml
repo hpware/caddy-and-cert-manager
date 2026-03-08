@@ -1,6 +1,6 @@
 services:
   cert-signer:
-    image: ghcr.io/hpware/basic-cert-signer
+    image: ghcr.io/hpware/caddy-and-cert-signer
     ports:
       - "3000:3000"
     environment:

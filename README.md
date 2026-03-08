@@ -1,4 +1,4 @@
-# Caddy & Cert Manager
+# Cert Manager
 > [!CAUTION]
 > This project is still in development. There will be bugs.
 

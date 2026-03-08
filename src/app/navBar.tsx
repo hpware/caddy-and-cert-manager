@@ -12,11 +12,6 @@ const services = [
     icon: BadgeCheck,
   },
   {
-    name: "Web",
-    href: "/web",
-    icon: Waypoints,
-  },
-  {
     name: "Logout",
     href: "/auth/logout",
     icon: LogOutIcon,
