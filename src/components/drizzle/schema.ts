@@ -30,6 +30,15 @@ export const proxy = pgTable("proxy", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const sessionToks = pgTable("session_tokens", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey().notNull(),
+  token: text("id").notNull(),
+  linkedToUser: text("linked_to_user").references(() => user.id),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+    .defaultNow()
+    .notNull(),
+});
+
 export const kvData = pgTable("kv_data", {
   id: integer("id").generatedAlwaysAsIdentity().notNull().primaryKey(),
   key: text("key").notNull().unique(),

@@ -2,12 +2,30 @@ import { NextRequest } from "next/server";
 import fs from "node:fs";
 import * as certTool from "@/components/core/certTooler";
 import randomString from "@/components/randomString";
+import { auth } from "@/components/auth";
+import { headers } from "next/headers";
+import { db } from "@/components/drizzle/db";
+import { sessionToks } from "@/components/drizzle/schema";
+import { eq } from "drizzle-orm";
 
 export const GET = async (
   request: NextRequest,
   props: { params: Promise<{ slug: string }> },
 ) => {
   try {
+    const header = await headers();
+    const params = new URLSearchParams(request.url.split("?")[1]);
+    const checkAuthToken = params.get("auth_token");
+    if (checkAuthToken !== null) {
+      const checkAuthTokenAgainstDatabase = db
+        .select()
+        .from(sessionToks)
+        .where(eq(sessionToks.token, checkAuthToken));
+    } else {
+      const checkAuth = auth.api.getSession({
+        headers: header,
+      });
+    }
     const { slug } = await props.params;
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -16,7 +34,6 @@ export const GET = async (
     ) {
       return new Response("Invalid slug", { status: 400 });
     }
-    const params = new URLSearchParams(request.url.split("?")[1]);
     const get = params.get("get");
     const type = params.get("type");
     if (!type || !["public", "private", "public_fullchain"].includes(type)) {

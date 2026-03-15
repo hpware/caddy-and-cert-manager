@@ -57,6 +57,20 @@
       "when": 1769526940405,
       "tag": "0007_ecf4d8f70fd131dc497451be",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1772962408334,
+      "tag": "0008_early_smiling_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1773071824819,
+      "tag": "0009_1b84857b51265365c505d67b",
+      "breakpoints": true
     }
   ]
 }

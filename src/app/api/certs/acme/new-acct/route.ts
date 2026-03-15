@@ -21,3 +21,7 @@ POST /acme/new-account HTTP/1.1
      "signature": "RZPOnYoPs1PhjszF...-nh6X1qtOFPB519I"
    }
 */
+
+export const GET = async () => {
+  return new Response("tbd", { status: 403 });
+};
