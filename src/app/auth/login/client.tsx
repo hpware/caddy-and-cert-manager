@@ -87,7 +87,6 @@ export default function Client() {
             <Button type="submit">Login</Button>
           </form>
           <Button
-            type="button"
             onClick={async () => {
               toast.promise(
                 async () => {
