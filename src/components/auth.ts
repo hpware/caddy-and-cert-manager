@@ -6,6 +6,7 @@ import { kvData } from "@/components/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { genericOAuth } from "better-auth/plugins";
 export const auth = betterAuth({
+  baseURL: process.env.NEXT_PUBLIC_URL,
   database: drizzleAdapter(db, {
     provider: "pg", // or "mysql", "sqlite"
   }),

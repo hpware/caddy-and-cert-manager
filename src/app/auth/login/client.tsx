@@ -86,6 +86,14 @@ export default function Client() {
             </div>
             <Button type="submit">Login</Button>
           </form>
+          <Button
+            type="submit"
+            onClick={async () => {
+              await authClient.signIn.
+            }}
+          >
+            Login with SSO
+          </Button>
           <Link href="/guest-resources">
             <Button className="py-2 px-4">Access to Guest Resources</Button>
           </Link>
