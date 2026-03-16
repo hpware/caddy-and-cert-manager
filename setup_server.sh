@@ -14,19 +14,19 @@ openssl x509 -req -in ./certs/created/default_csr.pem -CA ./certs/master.pub.pem
 cat ./certs/created/default_pub.pem ./certs/master.pub.pem > ./certs/created/default_fullchain.pem
 
 # create Caddyfile
-mkdir -p ./caddy/caddy/conf
-mkdir -p ./caddy/caddy/config
-mkdir -p ./caddy/caddy/data
-mkdir -p ./caddy/caddy/site
-tee ./caddy/caddy/conf/Caddyfile <<EOF
-:80 {
-        root * /usr/share/caddy
-        file_server
-}
-:443 {
-        tls /certs/default.fullchain.pem /certs/default.private_key.pem
-
-        root * /usr/share/caddy
-        file_server
-}
-EOF
+#mkdir -p ./caddy/caddy/conf
+#mkdir -p ./caddy/caddy/config
+#mkdir -p ./caddy/caddy/data
+#mkdir -p ./caddy/caddy/site
+#tee ./caddy/caddy/conf/Caddyfile <<EOF
+#:80 {
+#        root * /usr/share/caddy
+#        file_server
+#}
+#:443 {
+#        tls /certs/default.fullchain.pem /certs/default.private_key.pem
+#
+#        root * /usr/share/caddy
+#        fi le_server
+#}
+#EOF
