@@ -1,5 +1,6 @@
 services:
   cert-signer:
+    build: .
     image: ghcr.io/hpware/caddy-and-cert-signer
     ports:
       - "3000:3000"
