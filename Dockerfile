@@ -3,6 +3,7 @@ FROM oven/bun:latest AS builder
 WORKDIR /app
 COPY . .
 RUN bun install
+ENV BETTER_AUTH_SECRET="build-placeholder"
 RUN bun run build
 
 # prod

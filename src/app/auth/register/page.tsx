@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Client from "./client";
 import { db } from "@/components/drizzle/db";
 import { kvData } from "@/components/drizzle/schema";
