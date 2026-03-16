@@ -87,9 +87,23 @@ export default function Client() {
             <Button type="submit">Login</Button>
           </form>
           <Button
-            type="submit"
             onClick={async () => {
-              await authClient.signIn.
+              toast.promise(
+                async () => {
+                  const result = await authClient.signIn.oauth2({
+                    providerId: "sso",
+                    callbackURL: "/",
+                  });
+                  if (result?.error) {
+                    throw new Error(result.error.message);
+                  }
+                },
+                {
+                  loading: "Redirecting to SSO...",
+                  success: "Redirecting...",
+                  error: (e) => `SSO login failed: ${e.message}`,
+                },
+              );
             }}
           >
             Login with SSO
