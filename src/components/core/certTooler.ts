@@ -46,17 +46,15 @@ export async function generateCertificate(
     const sanMatch = getSAN.match(/Subject Alternative Name:.*\n\s*(.*)/);
     const extractedSans = sanMatch ? sanMatch[1].trim() : "";
 
-    let configContent = "";
+    let configContent = `[ v3_server ]\nsubjectAltName = @alt_names\nkeyUsage = critical, digitalSignature, keyEncipherment\nextendedKeyUsage = serverAuth\ncrlDistributionPoints = @crl_dp\n\n`;
     const cnMatch = getSAN.match(/Subject:.*?CN\s?=\s?([^\s,+/]+)/);
     let extractedCN = cnMatch ? cnMatch[1].trim() : "";
     extractedCN = extractedCN.replace(/[\[\]]/g, "");
+    //[ alt_names ]
     if (extractedSans) {
-      // If the CSR already has SANs, OpenSSL usually formats them correctly
-      // (e.g., "DNS:domain.com, IP:1.2.3.4"). We can use them as is.
       configContent = `subjectAltName = ${extractedSans}`;
     } else {
       if (extractedCN) {
-        // Check if extractedCN is an IP address
         const isIP =
           /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(extractedCN) ||
           extractedCN.includes(":");
@@ -65,6 +63,7 @@ export async function generateCertificate(
         configContent = `subjectAltName = ${prefix}:${extractedCN}`;
       }
     }
+    configContent += `\n\n[ server_cert ]\ncrlDistributionPoints = URI:${process.env.NEXT_PUBLIC_GUEST_RESOURCES_URL}/master.crl.pem`;
     if (configContent) {
       await fs.promises.writeFile(tempSavePath, configContent);
     }

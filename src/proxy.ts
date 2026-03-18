@@ -21,7 +21,13 @@ export default async function proxy(req: NextRequest) {
   const hostname = req.nextUrl.hostname;
   console.log(hostname);
   if (hostname === String(process.env.NEXT_PUBLIC_GUEST_RESOURCES_HOST)) {
-    return NextResponse.rewrite(new URL(`/guest-resources`, req.url));
+    if (
+      path.startsWith("/auth/") ||
+      path.startsWith("/api/")
+    ) {
+      return NextResponse.next();
+    }
+    return NextResponse.rewrite(new URL(`/guest-resources${path}`, req.url));
   }
   const userHeaders = req.headers;
   const checkUserLoginStatus = await auth.api.getSession({

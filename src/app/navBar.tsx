@@ -22,13 +22,26 @@ export default function NavBar() {
   const router = useRouter();
   const pathname = usePathname();
   const guestResourcesHost = process.env.NEXT_PUBLIC_GUEST_RESOURCES_HOST;
+  let guestHostname = guestResourcesHost;
+  if (guestResourcesHost) {
+    try {
+      const parsed = new URL(
+        guestResourcesHost.includes("://")
+          ? guestResourcesHost
+          : `https://${guestResourcesHost}`,
+      );
+      guestHostname = parsed.hostname;
+    } catch {
+      guestHostname = guestResourcesHost.replace(/^[a-z]+:\/\//, "").replace(/[:/].*$/, "");
+    }
+  }
   if (
     !(
       pathname.startsWith("/auth/") ||
       pathname.startsWith("/guest-resources") ||
-      (guestResourcesHost &&
+      (guestHostname &&
         typeof window !== "undefined" &&
-        window.location.hostname === guestResourcesHost)
+        window.location.hostname === guestHostname)
     )
   ) {
     return (
