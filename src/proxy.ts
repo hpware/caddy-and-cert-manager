@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { auth } from "./components/auth";
 
 export const config = {
@@ -16,7 +15,6 @@ export const config = {
 };
 
 export default async function proxy(req: NextRequest) {
-  const url = req.nextUrl;
   const path = req.nextUrl.pathname;
   const hostname = req.nextUrl.hostname;
 

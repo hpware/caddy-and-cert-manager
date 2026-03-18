@@ -2,10 +2,12 @@
 > [!CAUTION]
 > This project is still in development. There will be bugs.
 
-This platform is what I need for my home lab, a place I could get custom long term certs for my internal services, without the hassle (and security issues) for exposing them to the internet in order to get SSL certs, now you get your own. Bundled with Caddy management for a super basic caddy alternative to [Nginx Proxy Manager](https://nginxproxymanager.com/).
+My self hosted Guest Resources is here: https://certs.default.tw
+
+This platform is what I need for my home lab, a place I could get custom long term certs for my internal services, without the hassle (and security issues) for exposing them to the internet in order to get SSL certs, now you get your own.
 
 ## How to setup?
-You can setup the application using the account of `demo@default.tw`, and password is `password`.
+Just get an account! Or you could use the SSO system already in your Home lab or org to use this app, note that there isn't any user-admin separation at all.
 
 ## Certificate Management
 > [!NOTE]

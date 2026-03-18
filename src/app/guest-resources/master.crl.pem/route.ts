@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
 
-export const GET = async (request: NextRequest) => {
+export const GET = async (_request: NextRequest) => {
   const crlPath = path.resolve("./certs/master.crl.pem");
   try {
     const crlPem = await fs.promises.readFile(crlPath, "utf-8");
