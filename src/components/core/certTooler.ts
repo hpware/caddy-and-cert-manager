@@ -46,6 +46,7 @@ export async function generateCertificate(
       );
     }
     const req = await fetch(`${process.env.PROTECTION_PROXY_URL}/api/sign`, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },

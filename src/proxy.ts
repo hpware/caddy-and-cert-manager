@@ -25,7 +25,9 @@ export default async function proxy(req: NextRequest) {
     ) {
       return NextResponse.next();
     }
-    return NextResponse.rewrite(new URL(`/guest-resources${path}`, req.url));
+    const rewriteUrl = new URL(`/guest-resources${path}`, req.url);
+    rewriteUrl.search = req.nextUrl.search;
+    return NextResponse.rewrite(rewriteUrl);
   }
   const userHeaders = req.headers;
   const checkUserLoginStatus = await auth.api.getSession({

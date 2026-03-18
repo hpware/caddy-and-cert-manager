@@ -1,8 +1,13 @@
 import { $ } from "bun";
 import { mkdir, unlink } from "node:fs/promises";
+if (!process.env.PROTECTION_PROXY_TOKEN) {
+  console.error(
+    "PROTECTION_PROXY_TOKEN is not set. Refusing to start with a default token.",
+  );
+  process.exit(1);
+}
 console.log("Protection Proxy on :4000");
-const protectionProxyToken =
-  process.env.PROTECTION_PROXY_TOKEN ?? "defaultToken";
+const protectionProxyToken = process.env.PROTECTION_PROXY_TOKEN;
 Bun.serve({
   port: 4000,
   routes: {
@@ -60,7 +65,21 @@ Bun.serve({
             { status: 404 },
           );
         }
-        return new Response("");
+        if (!body.revokeID) {
+          return Response.json(
+            { error: "Missing revokeID" },
+            { status: 400 },
+          );
+        }
+        try {
+          await revokeCertificate(body.revokeID);
+          return Response.json({ error: null, revoked: true });
+        } catch (e) {
+          return Response.json(
+            { error: String(e), revoked: false },
+            { status: 500 },
+          );
+        }
       },
     },
     "/master.crl.pem": {
@@ -111,7 +130,6 @@ export async function generateCertificate(
       ["req", "-noout", "-text", "-in", "-"],
       csrText,
     );
-    console.log(getSAN);
     const sanMatch = getSAN.match(/Subject Alternative Name:.*\n\s*(.*)/);
     const extractedSans = sanMatch?.[1]?.trim() ?? "";
     const cMatch =
@@ -201,6 +219,8 @@ export async function generateCertificate(
         "-sha256",
         "-extfile",
         tempSavePath,
+        "-extensions",
+        "v3_server",
       ],
       csrText,
     );
@@ -211,4 +231,34 @@ export async function generateCertificate(
   } finally {
     if (await Bun.file(tempSavePath).exists()) await unlink(tempSavePath);
   }
+}
+
+async function revokeCertificate(revokeID: string) {
+  const certPath = `./certs/created/${revokeID}_pub.pem`;
+  const certFile = Bun.file(certPath);
+  if (!(await certFile.exists())) {
+    throw new Error(`Certificate not found: ${revokeID}`);
+  }
+  const configPath = "./certs/ca_db/openssl.cnf";
+  if (!(await Bun.file(configPath).exists())) {
+    throw new Error("CA database not initialized. Run init.sh first.");
+  }
+  await spawnWithInput(
+    "openssl",
+    ["ca", "-config", configPath, "-revoke", certPath, "-batch"],
+    "",
+  );
+  await spawnWithInput(
+    "openssl",
+    [
+      "ca",
+      "-config",
+      configPath,
+      "-gencrl",
+      "-out",
+      "./certs/master.crl.pem",
+      "-batch",
+    ],
+    "",
+  );
 }
