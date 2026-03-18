@@ -21,33 +21,39 @@ const services = [
 export default function NavBar() {
   const router = useRouter();
   const pathname = usePathname();
+  const guestResourcesHost = process.env.NEXT_PUBLIC_GUEST_RESOURCES_HOST;
   if (
-    pathname.startsWith("/auth/") ||
-    pathname.startsWith("/guest-resources")
+    !(
+      pathname.startsWith("/auth/") ||
+      pathname.startsWith("/guest-resources") ||
+      (guestResourcesHost &&
+        typeof window !== "undefined" &&
+        window.location.hostname === guestResourcesHost)
+    )
   ) {
-    return null;
+    return (
+      <>
+        <div className="absolute inset-x-0 flex flex-row justify-between text-center z-30 rounded-lg border bg-accent/5 p-2 mx-2 my-1">
+          <div></div>
+          <div className="flex flex-row justify-center space-x-3">
+            {services.map((service) => (
+              <Link
+                key={service.name}
+                href={service.href}
+                className="relative flex flex-row items-center justify-center group transition-all duration-300 space-x-2"
+              >
+                <service.icon className="w-4 h-4 text-primary group-hover:text-accent group-hover:-rotate-10 group-hover:scale-110 transition-all duration-300" />
+                <span className="text-xl font-bold whitespace-nowrap">
+                  {service.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div className="p-5"></div>
+      </>
+    );
   }
   // actions
-  return (
-    <>
-      <div className="absolute inset-x-0 flex flex-row justify-between text-center z-30 rounded-lg border bg-accent/5 p-2 mx-2 my-1">
-        <div></div>
-        <div className="flex flex-row justify-center space-x-3">
-          {services.map((service) => (
-            <Link
-              key={service.name}
-              href={service.href}
-              className="relative flex flex-row items-center justify-center group transition-all duration-300 space-x-2"
-            >
-              <service.icon className="w-4 h-4 text-primary group-hover:text-accent group-hover:-rotate-10 group-hover:scale-110 transition-all duration-300" />
-              <span className="text-xl font-bold whitespace-nowrap">
-                {service.name}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
-      <div className="p-5"></div>
-    </>
-  );
+  return null;
 }
