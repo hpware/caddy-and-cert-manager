@@ -46,24 +46,25 @@ export async function generateCertificate(
     const sanMatch = getSAN.match(/Subject Alternative Name:.*\n\s*(.*)/);
     const extractedSans = sanMatch ? sanMatch[1].trim() : "";
 
-    let configContent = `[ v3_server ]\nsubjectAltName = @alt_names\nkeyUsage = critical, digitalSignature, keyEncipherment\nextendedKeyUsage = serverAuth\ncrlDistributionPoints = @crl_dp\n\n`;
+    const crlBaseUrl = process.env.NEXT_PUBLIC_GUEST_RESOURCES_URL || "http://localhost:3000";
+
+    let configContent = `[ server_cert ]\nkeyUsage = critical, digitalSignature, keyEncipherment\nextendedKeyUsage = serverAuth\n`;
+
     const cnMatch = getSAN.match(/Subject:.*?CN\s?=\s?([^\s,+/]+)/);
     let extractedCN = cnMatch ? cnMatch[1].trim() : "";
     extractedCN = extractedCN.replace(/[\[\]]/g, "");
-    //[ alt_names ]
-    if (extractedSans) {
-      configContent = `subjectAltName = ${extractedSans}`;
-    } else {
-      if (extractedCN) {
-        const isIP =
-          /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(extractedCN) ||
-          extractedCN.includes(":");
 
-        const prefix = isIP ? "IP" : "DNS";
-        configContent = `subjectAltName = ${prefix}:${extractedCN}`;
-      }
+    if (extractedSans) {
+      configContent += `subjectAltName = ${extractedSans}\n`;
+    } else if (extractedCN) {
+      const isIP =
+        /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(extractedCN) ||
+        extractedCN.includes(":");
+      const prefix = isIP ? "IP" : "DNS";
+      configContent += `subjectAltName = ${prefix}:${extractedCN}\n`;
     }
-    configContent += `\n\n[ server_cert ]\ncrlDistributionPoints = URI:${process.env.NEXT_PUBLIC_GUEST_RESOURCES_URL}/master.crl.pem`;
+
+    configContent += `crlDistributionPoints = URI:${crlBaseUrl}/master.crl.pem\n`;
     if (configContent) {
       await fs.promises.writeFile(tempSavePath, configContent);
     }
@@ -84,6 +85,8 @@ export async function generateCertificate(
         "-sha256",
         "-extfile",
         tempSavePath,
+        "-extensions",
+        "server_cert",
       ],
       csrText,
     );
@@ -97,7 +100,7 @@ export async function generateCertificate(
     console.error(`generateCertificate failed: ${e}`);
     throw e;
   } finally {
-    if (fs.existsSync(tempSavePath)) await fs.unlinkSync(tempSavePath);
+    if (fs.existsSync(tempSavePath)) await fs.promises.unlink(tempSavePath);
   }
 }
 

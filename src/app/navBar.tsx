@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { BadgeCheck, BracketsIcon, LogOutIcon, Waypoints } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { authClient } from "@/components/auth-client";
 import { toast } from "sonner";
 
@@ -35,13 +36,17 @@ export default function NavBar() {
       guestHostname = guestResourcesHost.replace(/^[a-z]+:\/\//, "").replace(/[:/].*$/, "");
     }
   }
+  const [isGuestHost, setIsGuestHost] = useState(false);
+  useEffect(() => {
+    if (guestHostname && window.location.hostname === guestHostname) {
+      setIsGuestHost(true);
+    }
+  }, [guestHostname]);
   if (
     !(
       pathname.startsWith("/auth/") ||
       pathname.startsWith("/guest-resources") ||
-      (guestHostname &&
-        typeof window !== "undefined" &&
-        window.location.hostname === guestHostname)
+      isGuestHost
     )
   ) {
     return (
