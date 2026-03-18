@@ -1,3 +1,4 @@
+#!/bin/bash
 # Please change these, if not they will be the default
 ORG_NAME="Generic CertManager"
 CN_NAME="Generic CertManager"

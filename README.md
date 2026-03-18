@@ -6,8 +6,23 @@ My self hosted Guest Resources is here: https://certs.default.tw
 
 This platform is what I need for my home lab, a place I could get custom long term certs for my internal services, without the hassle (and security issues) for exposing them to the internet in order to get SSL certs, now you get your own.
 
-## How to setup?
-Just get an account! Or you could use the SSO system already in your Home lab or org to use this app, note that there isn't any user-admin separation at all.
+## Quick setup!
+```bash
+curl -O https://raw.githubusercontent.com/hpware/caddy-and-cert-manager/refs/heads/master/docker-compose.yml
+curl --output .env https://raw.githubusercontent.com/hpware/caddy-and-cert-manager/refs/heads/master/.env.docker
+curl -O https://raw.githubusercontent.com/hpware/caddy-and-cert-manager/refs/heads/master/init.sh
+```
+then, change your env and init.sh to your liking
+```bash
+chmod +x init.sh
+./init.sh
+docker compose up -d
+```
+
+and you are done! You now can register an account (if you have SSO, login with that!), and you have your own CA, just make sure that you and your family all trust that master certificate!
+
+## Will the master CA get leaked?
+If you have properly secured your server, no it won't this system (porca) is designed to only let the Next.js application request to sign a CSR request, revoking a certificate, and get a CRL only.
 
 ## Certificate Management
 > [!NOTE]

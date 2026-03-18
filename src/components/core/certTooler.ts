@@ -76,6 +76,14 @@ export async function generateCertificate(
   }
 }
 
+// TBD
+export async function revokeCertificate(
+  saveUUID: string = crypto.randomUUID(),
+) {
+  try {
+  } catch (e) {}
+}
+
 export async function generateFullchain(uuid: string): Promise<string> {
   try {
     const certPath = `./certs/created/${uuid}_pub.pem`;
