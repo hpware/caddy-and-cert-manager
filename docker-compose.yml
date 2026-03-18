@@ -32,6 +32,7 @@ services:
       IGNORE_PROTECTIONS: ${IGNORE_PROTECTIONS}
       PROTECTION_PROXY_URL: ${PROTECTION_PROXY_URL}
       PROTECTION_PROXY_TOKEN: ${PROTECTION_PROXY_TOKEN}
+      NEXT_PUBLIC_GUEST_RESOURCES_URL: ${NEXT_PUBLIC_GUEST_RESOURCES_URL}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/ok"]
       interval: 30s

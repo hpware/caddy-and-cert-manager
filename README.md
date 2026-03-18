@@ -2,9 +2,9 @@
 > [!CAUTION]
 > This project is still in development. There will be bugs.
 
-My self hosted Guest Resources is here: https://certs.default.tw, and the mirror of this repo wis here: https://git.yhw.tw/howard/caddy-and-cert-manager
+My self-hosted Guest Resources is here: https://certs.default.tw, and the mirror of this repo is here: https://git.yhw.tw/howard/caddy-and-cert-manager
 
-This platform is what I need for my home lab, a place I could get custom long term certs for my internal services, without the hassle (and security issues) for exposing them to the internet in order to get SSL certs, now you get your own.
+This platform is what I need for my home lab, a place I could get custom long-term certs for my internal services, without the hassle (and security issues) for exposing them to the internet in order to get SSL certs, now you get your own.
 
 ## Quick setup!
 ```bash

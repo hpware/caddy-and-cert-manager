@@ -6,6 +6,13 @@ if (!process.env.PROTECTION_PROXY_TOKEN) {
   );
   process.exit(1);
 }
+const guestResourcesUrl = process.env.NEXT_PUBLIC_GUEST_RESOURCES_URL;
+if (!guestResourcesUrl) {
+  console.error(
+    "NEXT_PUBLIC_GUEST_RESOURCES_URL is not set. Required for CRL distribution points.",
+  );
+  process.exit(1);
+}
 console.log("Protection Proxy on :4000");
 const protectionProxyToken = process.env.PROTECTION_PROXY_TOKEN;
 Bun.serve({
@@ -24,7 +31,7 @@ Bun.serve({
               error:
                 "Incorrect Proxy Token, please check your server configuration.",
             },
-            { status: 404 },
+            { status: 401 },
           );
         }
         const { csr, days } = body;
@@ -62,14 +69,11 @@ Bun.serve({
               error:
                 "Incorrect Proxy Token, please check your server configuration.",
             },
-            { status: 404 },
+            { status: 401 },
           );
         }
         if (!body.revokeID) {
-          return Response.json(
-            { error: "Missing revokeID" },
-            { status: 400 },
-          );
+          return Response.json({ error: "Missing revokeID" }, { status: 400 });
         }
         try {
           await revokeCertificate(body.revokeID);
@@ -133,12 +137,14 @@ export async function generateCertificate(
     const sanMatch = getSAN.match(/Subject Alternative Name:.*\n\s*(.*)/);
     const extractedSans = sanMatch?.[1]?.trim() ?? "";
     const cMatch =
-      getSAN.match(/Subject:.*?C\s?=\s?([^\s,+/]+).*/)?.[1]?.trim() ?? "TW";
+      getSAN.match(/Subject:.*?C\s?=\s?([^\s,+/]+).*/)?.[1]?.trim() ??
+      (process.env.DEFAULT_COUNTRY || "");
     const stMatch =
       getSAN.match(/Subject:.*?ST\s?=\s?([^\s,+/]+).*/)?.[1]?.trim() ??
-      "Taipei";
+      (process.env.DEFAULT_STATE || "");
     const lMatch =
-      getSAN.match(/Subject:.*?L\s?=\s?([^\s,+/]+).*/)?.[1]?.trim() ?? "Taipei";
+      getSAN.match(/Subject:.*?L\s?=\s?([^\s,+/]+).*/)?.[1]?.trim() ??
+      (process.env.DEFAULT_LOCALITY || "");
     const oMatch =
       getSAN.match(/Subject:.*?O\s?=\s?([^\s,+/]+).*/)?.[1]?.trim() ?? "";
     const ouMatch =
@@ -170,7 +176,7 @@ export async function generateCertificate(
       "subjectAltName = @alt_names",
       "keyUsage = critical, digitalSignature, keyEncipherment",
       "extendedKeyUsage = serverAuth",
-      `crlDistributionPoints = URI:${process.env.NEXT_PUBLIC_GUEST_RESOURCES_URL}/master.crl.pem`,
+      `crlDistributionPoints = URI:${guestResourcesUrl}/master.crl.pem`,
       "",
       "[ req_distinguished_name ]",
       `C = ${cMatch}`,

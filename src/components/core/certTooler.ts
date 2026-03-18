@@ -51,7 +51,7 @@ export async function generateCertificate(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        proxyToken: process.env.PROTECTION_PROXY_TOKEN || "defaultToken",
+        proxyToken: process.env.PROTECTION_PROXY_TOKEN,
         csr: csrText,
         days: generateDays,
       }),
@@ -77,12 +77,10 @@ export async function generateCertificate(
   }
 }
 
-// TBD
 export async function revokeCertificate(
   saveUUID: string = crypto.randomUUID(),
 ) {
-  try {
-  } catch (e) {}
+  throw new Error("revokeCertificate not implemented");
 }
 
 export async function generateFullchain(uuid: string): Promise<string> {

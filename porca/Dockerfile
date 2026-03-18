@@ -8,7 +8,7 @@ RUN bun install
 FROM oven/bun:debian
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y libssl-dev openssl && \
+RUN apt-get update && apt-get install -y libssl-dev openssl curl && \
     groupadd -r porca && useradd -r -g porca -d /app porca && \
     chown -R porca:porca /app
 ENV NODE_ENV=production
