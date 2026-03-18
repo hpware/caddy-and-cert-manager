@@ -36,71 +36,43 @@ export async function generateCertificate(
   generateDays: number,
   saveUUID: string = crypto.randomUUID(),
 ) {
-  const tempSavePath = `/tmp/${saveUUID}.cnf`;
   try {
-    const { stdout: getSAN } = await spawnWithInput(
-      "openssl",
-      ["req", "-noout", "-text", "-in", "-"],
-      csrText,
-    );
-    const sanMatch = getSAN.match(/Subject Alternative Name:.*\n\s*(.*)/);
-    const extractedSans = sanMatch ? sanMatch[1].trim() : "";
-
-    const crlBaseUrl = process.env.NEXT_PUBLIC_GUEST_RESOURCES_URL || "http://localhost:3000";
-
-    let configContent = `[ server_cert ]\nkeyUsage = critical, digitalSignature, keyEncipherment\nextendedKeyUsage = serverAuth\n`;
-
-    const cnMatch = getSAN.match(/Subject:.*?CN\s?=\s?([^\s,+/]+)/);
-    let extractedCN = cnMatch ? cnMatch[1].trim() : "";
-    extractedCN = extractedCN.replace(/[\[\]]/g, "");
-
-    if (extractedSans) {
-      configContent += `subjectAltName = ${extractedSans}\n`;
-    } else if (extractedCN) {
-      const isIP =
-        /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(extractedCN) ||
-        extractedCN.includes(":");
-      const prefix = isIP ? "IP" : "DNS";
-      configContent += `subjectAltName = ${prefix}:${extractedCN}\n`;
+    if (
+      process.env.IGNORE_PROTECTIONS?.toLowerCase() !== "true" &&
+      generateDays > 200
+    ) {
+      throw new Error(
+        "Cannot generate over 200 days. To ignore this error, set IGNORE_PROTECTIONS=true in the `.env` file.",
+      );
     }
+    const req = await fetch(`${process.env.PROTECTION_PROXY_URL}/api/sign`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        proxyToken: process.env.PROTECTION_PROXY_TOKEN || "defaultToken",
+        csr: csrText,
+        days: generateDays,
+      }),
+    });
+    const res = (await req.json()) as {
+      error: string | null;
+      pb: string;
+      itemCN: string;
+    };
 
-    configContent += `crlDistributionPoints = URI:${crlBaseUrl}/master.crl.pem\n`;
-    if (configContent) {
-      await fs.promises.writeFile(tempSavePath, configContent);
+    if (res.error !== null) {
+      throw new Error(res.error);
     }
-    const termGenerate = await spawnWithInput(
-      "openssl",
-      [
-        "x509",
-        "-req",
-        "-in",
-        "-",
-        "-CA",
-        "./certs/master.pub.pem",
-        "-CAkey",
-        "./certs/master.key.pem",
-        "-CAcreateserial",
-        "-days",
-        generateDays.toString(),
-        "-sha256",
-        "-extfile",
-        tempSavePath,
-        "-extensions",
-        "server_cert",
-      ],
-      csrText,
-    );
     const savePath = `./certs/created/${saveUUID}_pub.pem`;
 
     await fs.promises.mkdir("./certs/created", { recursive: true });
 
-    await fs.promises.writeFile(savePath, termGenerate.stdout);
-    return { pb: savePath, itemCN: extractedCN };
+    await fs.promises.writeFile(savePath, res.pb);
+    return { pb: savePath, itemCN: res.itemCN };
   } catch (e) {
     console.error(`generateCertificate failed: ${e}`);
     throw e;
-  } finally {
-    if (fs.existsSync(tempSavePath)) await fs.promises.unlink(tempSavePath);
   }
 }
 

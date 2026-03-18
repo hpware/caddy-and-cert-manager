@@ -1,29 +1,67 @@
 import { $ } from "bun";
 import { mkdir, unlink } from "node:fs/promises";
-
+console.log("Protection Proxy on :4000");
+const protectionProxyToken =
+  process.env.PROTECTION_PROXY_TOKEN ?? "defaultToken";
 Bun.serve({
   port: 4000,
   routes: {
     "/api/sign": {
       POST: async (req) => {
-        const body = (await req.json()) as { csr?: string; days?: number };
+        const body = (await req.json()) as {
+          csr?: string;
+          days?: number;
+          proxyToken?: string;
+        };
+        if (!body.proxyToken || body.proxyToken !== protectionProxyToken) {
+          return Response.json(
+            {
+              error:
+                "Incorrect Proxy Token, please check your server configuration.",
+            },
+            { status: 404 },
+          );
+        }
         const { csr, days } = body;
         if (!csr || !days) {
           return Response.json(
-            { error: "Missing csr or days" },
+            {
+              error: "Missing csr or days",
+              pb: null,
+              itemCN: null,
+            },
             { status: 400 },
           );
         }
         try {
           const result = await generateCertificate(csr, Number(days));
-          return Response.json(result);
+          return Response.json({ ...result, error: null });
         } catch (e) {
-          return Response.json({ error: String(e) }, { status: 500 });
+          return Response.json(
+            { error: String(e), pb: null, itemCN: null },
+            { status: 500 },
+          );
         }
       },
     },
-    "/api/revoke": async (req) => {
-      return new Response("");
+    // TBD
+    "/api/revoke": {
+      POST: async (req) => {
+        const body = (await req.json()) as {
+          revokeID?: string;
+          proxyToken?: string;
+        };
+        if (!body.proxyToken || body.proxyToken !== protectionProxyToken) {
+          return Response.json(
+            {
+              error:
+                "Incorrect Proxy Token, please check your server configuration.",
+            },
+            { status: 404 },
+          );
+        }
+        return new Response("");
+      },
     },
     "/master.crl.pem": {
       GET: async () => {
@@ -36,6 +74,7 @@ Bun.serve({
         });
       },
     },
+    "/ok": new Response("ok"),
   },
 });
 
@@ -60,7 +99,6 @@ async function spawnWithInput(
   return { stdout, stderr };
 }
 
-// migrated from Next.js project.
 export async function generateCertificate(
   csrText: string,
   generateDays: number,
@@ -73,27 +111,76 @@ export async function generateCertificate(
       ["req", "-noout", "-text", "-in", "-"],
       csrText,
     );
+    console.log(getSAN);
     const sanMatch = getSAN.match(/Subject Alternative Name:.*\n\s*(.*)/);
     const extractedSans = sanMatch?.[1]?.trim() ?? "";
-
-    let configContent = `[ v3_server ]\nsubjectAltName = @alt_names\nkeyUsage = critical, digitalSignature, keyEncipherment\nextendedKeyUsage = serverAuth\ncrlDistributionPoints = @crl_dp\n\n`;
+    const cMatch =
+      getSAN.match(/Subject:.*?C\s?=\s?([^\s,+/]+).*/)?.[1]?.trim() ?? "TW";
+    const stMatch =
+      getSAN.match(/Subject:.*?ST\s?=\s?([^\s,+/]+).*/)?.[1]?.trim() ??
+      "Taipei";
+    const lMatch =
+      getSAN.match(/Subject:.*?L\s?=\s?([^\s,+/]+).*/)?.[1]?.trim() ?? "Taipei";
+    const oMatch =
+      getSAN.match(/Subject:.*?O\s?=\s?([^\s,+/]+).*/)?.[1]?.trim() ?? "";
+    const ouMatch =
+      getSAN.match(/Subject:.*?OU\s?=\s?([^\s,+/]+).*/)?.[1]?.trim() ?? "";
     const cnMatch = getSAN.match(/Subject:.*?CN\s?=\s?([^\s,+/]+)/);
     let extractedCN = cnMatch?.[1]?.trim() ?? "";
     extractedCN = extractedCN.replace(/[\[\]]/g, "");
-    //[ alt_names ]
+    // Parse SAN entries into typed list (e.g. ["DNS:foo.com", "IP:1.2.3.4"])
+    const altNames: string[] = [];
     if (extractedSans) {
-      configContent = `subjectAltName = ${extractedSans}`;
-    } else {
-      if (extractedCN) {
-        const isIP =
-          /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(extractedCN) ||
-          extractedCN.includes(":");
-
-        const prefix = isIP ? "IP" : "DNS";
-        configContent = `subjectAltName = ${prefix}:${extractedCN}`;
+      // extractedSans comes from openssl as comma-separated, e.g. "DNS:a.com, DNS:b.com, IP Address:1.2.3.4"
+      for (const entry of extractedSans.split(",")) {
+        const trimmed = entry.trim();
+        // Normalize "IP Address:" to "IP:"
+        const normalized = trimmed.replace(/^IP Address:/i, "IP:");
+        if (normalized) altNames.push(normalized);
       }
+    } else if (extractedCN) {
+      const isIP =
+        /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(extractedCN) ||
+        extractedCN.includes(":");
+      const prefix = isIP ? "IP" : "DNS";
+      altNames.push(`${prefix}:${extractedCN}`);
     }
-    configContent += `\n\n[ server_cert ]\ncrlDistributionPoints = URI:${process.env.NEXT_PUBLIC_GUEST_RESOURCES_URL}/master.crl.pem`;
+
+    // Build OpenSSL extfile config
+    const lines: string[] = [
+      "[ v3_server ]",
+      "subjectAltName = @alt_names",
+      "keyUsage = critical, digitalSignature, keyEncipherment",
+      "extendedKeyUsage = serverAuth",
+      `crlDistributionPoints = URI:${process.env.NEXT_PUBLIC_GUEST_RESOURCES_URL}/master.crl.pem`,
+      "",
+      "[ req_distinguished_name ]",
+      `C = ${cMatch}`,
+      `ST = ${stMatch}`,
+      `L = ${lMatch}`,
+      `CN = ${extractedCN}`,
+    ];
+    if (oMatch) lines.push(`O = ${oMatch}`);
+    if (ouMatch) lines.push(`OU = ${ouMatch}`);
+
+    // Build [ alt_names ] section with numbered entries
+    lines.push("", "[ alt_names ]");
+    const dnsCount: Record<string, number> = {
+      DNS: 0,
+      IP: 0,
+      email: 0,
+      URI: 0,
+    };
+    for (const entry of altNames) {
+      const colonIdx = entry.indexOf(":");
+      const type = colonIdx !== -1 ? entry.slice(0, colonIdx) : "DNS";
+      const value = colonIdx !== -1 ? entry.slice(colonIdx + 1) : entry;
+      const key = type in dnsCount ? type : "DNS";
+      dnsCount[key] = (dnsCount[key] ?? 0) + 1;
+      lines.push(`${key}.${dnsCount[key]} = ${value}`);
+    }
+
+    const configContent = lines.join("\n");
     if (configContent) {
       await Bun.write(tempSavePath, configContent);
     }
@@ -117,12 +204,7 @@ export async function generateCertificate(
       ],
       csrText,
     );
-    const savePath = `./certs/created/${saveUUID}_pub.pem`;
-
-    await mkdir("./certs/created", { recursive: true });
-
-    await Bun.write(savePath, termGenerate.stdout);
-    return { pb: savePath, itemCN: extractedCN };
+    return { pb: termGenerate.stdout, itemCN: extractedCN };
   } catch (e) {
     console.error(`generateCertificate failed: ${e}`);
     throw e;
