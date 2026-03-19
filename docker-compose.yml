@@ -23,8 +23,9 @@ services:
       porca:
         condition: service_started
     volumes:
-      - ./certs/ca:/app/certs/created
-      - ./certs/master.pub.pem:/app/certs/master.pub.pem
+      - ./certs/created:/app/certs/created
+      - ./certs/master.pub.pem:/app/certs/master.pub.pem:ro
+      - ./certs/master.crl.pem:/app/certs/master.crl.pem:ro
   porca:
     build: ./porca
     image: ghcr.io/hpware/cert-porca
