@@ -441,7 +441,7 @@ export default function Page() {
     <div className="m-3">
       <h1 className="text-2xl font-bold">Certificate Manager</h1>
       <div className="flex flex-col md:flex-row justify-between pb-2">
-        <div>
+        {/*<div>
           <Select>
             <SelectTrigger>
               <SelectValue placeholder="Easy" />
@@ -451,7 +451,7 @@ export default function Page() {
               <SelectItem value="advanced">Advanced</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
         <div className="auto-cols-fr gap-4 justify-center">
           {dialogStuff.map((i) => (
             <Dialog key={i.title}>

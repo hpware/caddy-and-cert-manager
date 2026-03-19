@@ -56,7 +56,7 @@ export default function Client({
               <Button>View</Button>
             </Link>
             <Link
-              href={`/api/certs/get_file/${dbData.id}?type=public_fullchain&auth_token=${generateAuthToken}`}
+              href={`/api/certs/get_file/${dbData.id}?type=public_fullchain`}
             >
               <Button>Download without auth</Button>
             </Link>
