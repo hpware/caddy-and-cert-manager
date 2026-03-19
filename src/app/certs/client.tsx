@@ -646,6 +646,8 @@ export default function Page() {
             </SelectContent>
           </Select>
         </div> */}
+        <div></div>
+        {/*Remove if I want to bring back the Easy / Advanced toggle */}
         <div className="auto-cols-fr gap-4 justify-center">
           {dialogStuff.map((i) => (
             <Dialog key={i.title}>
