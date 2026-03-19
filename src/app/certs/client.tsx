@@ -198,6 +198,7 @@ export default function Page() {
                     if (e.key === "@") e.preventDefault();
                     if (e.key === "!") e.preventDefault();
                     if (e.key === "$") e.preventDefault();
+
                     if (e.key === "%") e.preventDefault();
                     if (e.key === "(") e.preventDefault();
                     if (e.key === ")") e.preventDefault();
@@ -729,7 +730,7 @@ export default function Page() {
                     deleteCert.mutate(row.original.id);
                   }}
                 >
-                  Delete{" "}
+                  Revoke{" "}
                   <Trash2Icon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
                 </Button>
               </div>

@@ -60,8 +60,8 @@ Bun.serve({
     "/api/revoke": {
       POST: async (req) => {
         const body = (await req.json()) as {
-          revokeID?: string;
           proxyToken?: string;
+          cert?: string;
         };
         if (!body.proxyToken || body.proxyToken !== protectionProxyToken) {
           return Response.json(
@@ -72,11 +72,11 @@ Bun.serve({
             { status: 401 },
           );
         }
-        if (!body.revokeID) {
+        if (!body.cert) {
           return Response.json({ error: "Missing revokeID" }, { status: 400 });
         }
         try {
-          await revokeCertificate(body.revokeID);
+          await revokeCertificate(body.cert);
           return Response.json({ error: null, revoked: true });
         } catch (e) {
           return Response.json(
@@ -239,20 +239,15 @@ export async function generateCertificate(
   }
 }
 
-async function revokeCertificate(revokeID: string) {
-  const certPath = `./certs/created/${revokeID}_pub.pem`;
-  const certFile = Bun.file(certPath);
-  if (!(await certFile.exists())) {
-    throw new Error(`Certificate not found: ${revokeID}`);
-  }
+async function revokeCertificate(cert: string) {
   const configPath = "./certs/ca_db/openssl.cnf";
   if (!(await Bun.file(configPath).exists())) {
     throw new Error("CA database not initialized. Run init.sh first.");
   }
   await spawnWithInput(
     "openssl",
-    ["ca", "-config", configPath, "-revoke", certPath, "-batch"],
-    "",
+    ["ca", "-config", configPath, "-revoke", "-batch", "--"],
+    cert,
   );
   await spawnWithInput(
     "openssl",

@@ -77,10 +77,25 @@ export async function generateCertificate(
   }
 }
 
-export async function revokeCertificate(
-  saveUUID: string = crypto.randomUUID(),
-) {
-  throw new Error("revokeCertificate not implemented");
+export async function revokeCertificate(revokeCertPublicPem: string) {
+  const req = await fetch(`${process.env.PROTECTION_PROXY_URL}/api/revoke`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      proxyToken: process.env.PROTECTION_PROXY_TOKEN,
+      cert: revokeCertPublicPem,
+    }),
+  });
+  const res = (await req.json()) as {
+    error: string | null;
+    revoked: boolean;
+  };
+  if (res.error !== null) {
+    throw new Error(res.error);
+  }
+  return;
 }
 
 export async function generateFullchain(uuid: string): Promise<string> {

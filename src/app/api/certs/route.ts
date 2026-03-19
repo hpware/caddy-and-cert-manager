@@ -1,8 +1,10 @@
 import checkUserLoginStatus from "@/components/checkUserLoginStatusAPI";
+import { revokeCertificate } from "@/components/core/certTooler";
 import { db } from "@/components/drizzle/db";
 import * as schema from "@/components/drizzle/schema";
 import randomString from "@/components/randomString";
 import { eq } from "drizzle-orm";
+import fs from "node:fs";
 
 export const DELETE = async (req: Request) => {
   // add auth
@@ -12,6 +14,9 @@ export const DELETE = async (req: Request) => {
   }
   const body = await req.json();
   try {
+    const certPath = `./certs/created/${body.id}_pub.pem`;
+    const publicKey = await fs.promises.readFile(certPath, "utf8");
+    await revokeCertificate(publicKey);
     await db
       .delete(schema.certificates)
       .where(eq(schema.certificates.id, body.id));
