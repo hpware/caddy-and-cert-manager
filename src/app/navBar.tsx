@@ -11,11 +11,13 @@ const services = [
     name: "Certificate",
     href: "/certs",
     icon: BadgeCheck,
+    defaultHTML: false,
   },
   {
     name: "Logout",
     href: "/auth/logout",
     icon: LogOutIcon,
+    defaultHTML: true,
   },
 ];
 
@@ -33,7 +35,9 @@ export default function NavBar() {
       );
       guestHostname = parsed.hostname;
     } catch {
-      guestHostname = guestResourcesHost.replace(/^[a-z]+:\/\//, "").replace(/[:/].*$/, "");
+      guestHostname = guestResourcesHost
+        .replace(/^[a-z]+:\/\//, "")
+        .replace(/[:/].*$/, "");
     }
   }
   const [isGuestHost, setIsGuestHost] = useState(false);
@@ -54,18 +58,35 @@ export default function NavBar() {
         <div className="absolute inset-x-0 flex flex-row justify-between text-center z-30 rounded-lg border bg-accent/5 p-2 mx-2 my-1">
           <div></div>
           <div className="flex flex-row justify-center space-x-3">
-            {services.map((service) => (
-              <Link
-                key={service.name}
-                href={service.href}
-                className="relative flex flex-row items-center justify-center group transition-all duration-300 space-x-2"
-              >
-                <service.icon className="w-4 h-4 text-primary group-hover:text-accent group-hover:-rotate-10 group-hover:scale-110 transition-all duration-300" />
-                <span className="text-xl font-bold whitespace-nowrap">
-                  {service.name}
-                </span>
-              </Link>
-            ))}
+            {services.map((service) => {
+              if (service.defaultHTML === true) {
+                return (
+                  <a
+                    key={service.name}
+                    href={service.href}
+                    className="relative flex flex-row items-center justify-center group transition-all duration-300 space-x-2"
+                  >
+                    <service.icon className="w-4 h-4 text-primary group-hover:text-accent group-hover:-rotate-10 group-hover:scale-110 transition-all duration-300" />
+                    <span className="text-xl font-bold whitespace-nowrap">
+                      {service.name}
+                    </span>
+                  </a>
+                );
+              } else {
+                return (
+                  <Link
+                    key={service.name}
+                    href={service.href}
+                    className="relative flex flex-row items-center justify-center group transition-all duration-300 space-x-2"
+                  >
+                    <service.icon className="w-4 h-4 text-primary group-hover:text-accent group-hover:-rotate-10 group-hover:scale-110 transition-all duration-300" />
+                    <span className="text-xl font-bold whitespace-nowrap">
+                      {service.name}
+                    </span>
+                  </Link>
+                );
+              }
+            })}
           </div>
         </div>
         <div className="p-5"></div>

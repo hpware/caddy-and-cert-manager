@@ -7,6 +7,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/cert_db
       NEXT_PUBLIC_URL: ${NEXT_PUBLIC_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       NEXT_PUBLIC_GUEST_RESOURCES_HOST: ${NEXT_PUBLIC_GUEST_RESOURCES_HOST}
       NEXT_PUBLIC_GUEST_RESOURCES_URL: ${NEXT_PUBLIC_GUEST_RESOURCES_URL}
       NEXT_PUBLIC_SSO_ENABLE: ${NEXT_PUBLIC_SSO_ENABLE}
@@ -17,8 +18,10 @@ services:
       PROTECTION_PROXY_URL: ${PROTECTION_PROXY_URL}
       PROTECTION_PROXY_TOKEN: ${PROTECTION_PROXY_TOKEN}
     depends_on:
-      - postgres
-      - porca
+      postgres:
+        condition: service_healthy
+      porca:
+        condition: service_started
     volumes:
       - ./certs/ca:/app/certs/created
       - ./certs/master.pub.pem:/app/certs/master.pub.pem

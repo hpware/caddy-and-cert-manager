@@ -33,7 +33,7 @@ touch ./certs/ca_db/index.txt
 echo "01" > ./certs/ca_db/serial
 echo "01" > ./certs/ca_db/crlnumber
 
-cat > ./certs/ca_db/openssl.cnf << 'CONF'
+cat > ./certs/ca_db/openssl.cnf << 'EOF'
 [ ca ]
 default_ca = CA_default
 
@@ -46,6 +46,7 @@ certificate = ./certs/master.pub.pem
 private_key = ./certs/master.key.pem
 default_md = sha256
 default_crl_days = 30
-CONF
+EOF
 
 openssl ca -config ./certs/ca_db/openssl.cnf -gencrl -out ./certs/master.crl.pem -batch
+openssl crl -in ./certs/master.crl.pem -outform DER -out ./certs/master.crl
