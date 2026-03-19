@@ -4,6 +4,7 @@ ORG_NAME="Generic CertManager"
 CN_NAME="Generic CertManager"
 COUNTRY_TWO_DIGITS="TW"
 LOCATION="Taipei"
+EXPIRES_AT="7305"
 
 # prevent unchanged generic values
 RAND_TOKEN="$(openssl rand -hex 5)"
@@ -26,7 +27,7 @@ fi
 mkdir -p ./certs/created
 mkdir -p ./certs/ca_db
 openssl genrsa -out ./certs/master.key.pem 4096
-openssl req -x509 -new -nodes -key ./certs/master.key.pem -sha512 -days 7305 -out ./certs/master.pub.pem -subj "/C=${COUNTRY_TWO_DIGITS}/ST=${LOCATION}/L=${LOCATION}/O=${ORG_NAME}/CN=${CN_NAME}"
+openssl req -x509 -new -nodes -key ./certs/master.key.pem -sha512 -days ${EXPIRES_AT} -out ./certs/master.pub.pem -subj "/C=${COUNTRY_TWO_DIGITS}/ST=${LOCATION}/L=${LOCATION}/O=${ORG_NAME}/CN=${CN_NAME}"
 
 # bootstrap CA database and initial empty CRL
 touch ./certs/ca_db/index.txt

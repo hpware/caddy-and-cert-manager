@@ -20,7 +20,7 @@ export const DELETE = async (req: Request) => {
     await db
       .delete(schema.certificates)
       .where(eq(schema.certificates.id, body.id));
-    return new Response("ok");
+    return new Response("Certificate Deleted!");
   } catch (e) {
     const errorId = randomString();
     console.error(`[ERRID: ${errorId}] ${e}`);

@@ -10,7 +10,7 @@ export const config = {
      * 3. /_static (if you use it)
      * 4. metadata files (favicon.ico, sitemap.xml, etc.)
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|favicon.ico).*)",
   ],
 };
 
@@ -19,10 +19,7 @@ export default async function proxy(req: NextRequest) {
   const hostname = req.nextUrl.hostname;
 
   if (hostname === String(process.env.NEXT_PUBLIC_GUEST_RESOURCES_HOST)) {
-    if (
-      path.startsWith("/auth/") ||
-      path.startsWith("/api/")
-    ) {
+    if (path.startsWith("/auth/") || path.startsWith("/api/")) {
       return NextResponse.next();
     }
     const rewriteUrl = new URL(`/guest-resources${path}`, req.url);
