@@ -1,5 +1,5 @@
 import checkUserLoginStatus from "@/components/checkUserLoginStatusAPI";
-import { revokeCertificate } from "@/components/core/certTooler";
+import { revokeCertificateWithRegen } from "@/components/core/regenClient";
 import { db } from "@/components/drizzle/db";
 import * as schema from "@/components/drizzle/schema";
 import randomString from "@/components/randomString";
@@ -16,7 +16,7 @@ export const DELETE = async (req: Request) => {
   try {
     const certPath = `./certs/created/${body.id}_pub.pem`;
     const publicKey = await fs.promises.readFile(certPath, "utf8");
-    await revokeCertificate(publicKey);
+    await revokeCertificateWithRegen(publicKey);
     await db
       .delete(schema.certificates)
       .where(eq(schema.certificates.id, body.id));

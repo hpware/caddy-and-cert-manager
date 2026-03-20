@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Highlight, themes } from "prism-react-renderer";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useMutation,
   useInfiniteQuery,
@@ -37,9 +37,10 @@ import {
   ClipboardIcon,
   Download,
   FileBadgeIcon,
+  SaveIcon,
   PenLine,
 } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -48,10 +49,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Page() {
   const [dialogStatus, setDialogStatus] = useState<string>("easy");
   const [openTabList, setOpenTabList] = useState<string>("server");
+  const [regenSettings, setRegenSettings] = useState({
+    certUrl: "",
+    apiKey: "",
+  });
   const [easySync, setEasySync] = useState<{
     city: string;
     country: string;
@@ -88,8 +94,48 @@ export default function Page() {
     },
     queryKey: ["masterCert"],
   });
+  const getSettings = useQuery({
+    queryFn: async () => {
+      const req = await fetch("/api/certs/settings");
+      const res = await req.json();
+      if (!req.ok) {
+        throw new Error(res.error || "Failed to load settings");
+      }
+      return res as {
+        certUrl: string;
+        apiKey: string;
+        hasApiKey: boolean;
+        error: string | null;
+      };
+    },
+    queryKey: ["regenSettings"],
+  });
+  const getRegenAccount = useQuery({
+    enabled: false,
+    queryFn: async () => {
+      const req = await fetch("/api/certs/settings/account");
+      const res = await req.json();
+      if (!req.ok) {
+        throw new Error(res.error || "Failed to fetch account");
+      }
+      return res as {
+        account: Record<string, unknown>;
+        error: string | null;
+      };
+    },
+    queryKey: ["regenAccount"],
+  });
   const router = useRouter();
   const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!getSettings.data) {
+      return;
+    }
+    setRegenSettings({
+      certUrl: getSettings.data.certUrl ?? "",
+      apiKey: getSettings.data.apiKey ?? "",
+    });
+  }, [getSettings.data]);
   const handleSubmitCreate = useMutation({
     mutationFn: async (data: FormData) => {
       toast.promise(
@@ -109,6 +155,28 @@ export default function Page() {
           error: "Failed to create certificate",
         },
       );
+    },
+  });
+  const saveSettings = useMutation({
+    mutationFn: async () => {
+      const req = await fetch("/api/certs/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(regenSettings),
+      });
+      const res = await req.json();
+      if (!req.ok || !res.ok) {
+        throw new Error(res.error || "Failed to save settings");
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["regenSettings"] });
+      toast.success("Settings saved");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
     },
   });
   const submitIPAddressToAddToArray = () => {
@@ -634,7 +702,13 @@ export default function Page() {
   return (
     <div className="m-3">
       <h1 className="text-2xl font-bold">Certificate Manager</h1>
-      <div className="flex flex-col md:flex-row justify-between pb-2">
+      <Tabs value={openTabList} onValueChange={setOpenTabList}>
+        <TabsList className="my-3">
+          <TabsTrigger value="server">Server</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="server" className="space-y-3">
+          <div className="flex flex-col md:flex-row justify-between pb-2">
         {/*<div>
           <Select>
             <SelectTrigger>
@@ -648,36 +722,36 @@ export default function Page() {
         </div> */}
         <div></div>
         {/*Remove if I want to bring back the Easy / Advanced toggle */}
-        <div className="auto-cols-fr gap-4 justify-center">
-          {dialogStuff.map((i) => (
-            <Dialog key={i.title}>
-              <DialogTrigger>
-                <Button className="cursor-pointer hover:bg-accent group transition-all duration-300">
-                  {i.title}{" "}
-                  <i.icon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{i.title}</DialogTitle>
-                  <DialogDescription>{i.description}</DialogDescription>
-                </DialogHeader>
-                {i.reactLogic}
-              </DialogContent>
-            </Dialog>
-          ))}
-          <Button
-            className="cursor-pointer hover:bg-accent group transition-all duration-300"
-            onClick={() => {
-              invalidateQuery();
-              toast.success("Data refreshed!");
-            }}
-          >
-            Refresh{" "}
-            <CloudSync className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
-          </Button>
-        </div>
-      </div>
+          <div className="auto-cols-fr gap-4 justify-center">
+            {dialogStuff.map((i) => (
+              <Dialog key={i.title}>
+                <DialogTrigger>
+                  <Button className="cursor-pointer hover:bg-accent group transition-all duration-300">
+                    {i.title}{" "}
+                    <i.icon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{i.title}</DialogTitle>
+                    <DialogDescription>{i.description}</DialogDescription>
+                  </DialogHeader>
+                  {i.reactLogic}
+                </DialogContent>
+              </Dialog>
+            ))}
+            <Button
+              className="cursor-pointer hover:bg-accent group transition-all duration-300"
+              onClick={() => {
+                invalidateQuery();
+                toast.success("Data refreshed!");
+              }}
+            >
+              Refresh{" "}
+              <CloudSync className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
+            </Button>
+          </div>
+          </div>
       <Table
         columns={[
           {
@@ -754,6 +828,94 @@ export default function Page() {
           </Button>
         )}
       </div>
+        </TabsContent>
+        <TabsContent value="settings" className="space-y-4">
+          <div className="max-w-3xl space-y-4 rounded-lg border p-4">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">Regen Settings</h2>
+              <p className="text-sm text-muted-foreground">
+                When configured, certificate generate and revoke actions will use
+                the remote regen service instead of the local signing proxy.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="certUrl">CERT_URL</Label>
+              <Input
+                id="certUrl"
+                value={regenSettings.certUrl}
+                placeholder="https://example.com"
+                onChange={(e) =>
+                  setRegenSettings((prev) => ({
+                    ...prev,
+                    certUrl: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="apiKey">API_KEY / TOKEN</Label>
+              <Input
+                id="apiKey"
+                type="password"
+                value={regenSettings.apiKey}
+                placeholder="token"
+                onChange={(e) =>
+                  setRegenSettings((prev) => ({
+                    ...prev,
+                    apiKey: e.target.value,
+                  }))
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Requests send both `Authorization` and `API_KEY` headers as
+                `BEARER TOKEN {"${TOKEN}"}`.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                className="group"
+                disabled={saveSettings.isPending}
+                onClick={() => saveSettings.mutate()}
+              >
+                Save Settings{" "}
+                <SaveIcon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
+              </Button>
+              <Button
+                variant="outline"
+                disabled={getRegenAccount.isFetching}
+                onClick={async () => {
+                  const result = await getRegenAccount.refetch();
+                  if (result.error) {
+                    toast.error(result.error.message);
+                    return;
+                  }
+                  toast.success("Account loaded");
+                }}
+              >
+                Fetch Account
+              </Button>
+            </div>
+          </div>
+          <div className="max-w-3xl space-y-2 rounded-lg border p-4">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">Account Response</h2>
+              <p className="text-sm text-muted-foreground">
+                Raw response from `${"{CERT_URL}"}/api/regen/account`.
+              </p>
+            </div>
+            <Textarea
+              readOnly
+              className="min-h-64 font-mono text-xs"
+              value={
+                getRegenAccount.data?.account
+                  ? JSON.stringify(getRegenAccount.data.account, null, 2)
+                  : ""
+              }
+              placeholder="Fetch account data to inspect the remote response."
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
