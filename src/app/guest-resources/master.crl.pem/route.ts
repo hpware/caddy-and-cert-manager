@@ -8,7 +8,12 @@ export const GET = async (_request: NextRequest) => {
     const crlPem = await fs.promises.readFile(crlPath, "utf-8");
     return new Response(crlPem, {
       status: 200,
-      headers: { "Content-Type": "application/pkix-crl; charset=utf-8" },
+      headers: {
+        "Content-Type": "application/pkix-crl; charset=utf-8",
+        "Cache-Control": "no-cache, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      },
     });
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code === "ENOENT") {

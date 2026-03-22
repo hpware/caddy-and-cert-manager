@@ -103,7 +103,6 @@ export default function Page() {
       }
       return res as {
         certUrl: string;
-        apiKey: string;
         hasApiKey: boolean;
         error: string | null;
       };
@@ -233,11 +232,9 @@ export default function Page() {
           {dialogStatus === "easy" ? (
             <>
               <input
-                type=""
+                type="hidden"
                 id="CN"
                 name="CN"
-                required
-                hidden
                 value={easySync.domains[0]}
               />
               <Label htmlFor="subjectAltNameInputBox">
@@ -245,7 +242,7 @@ export default function Page() {
               </Label>
               <div className="flex flex-row space-x-1">
                 <Input
-                  type=""
+                  type="text"
                   id="subjectAltNameInputBox"
                   name="subjectAltNameInputBox"
                   value={easySync.domainInputBox}
@@ -281,6 +278,7 @@ export default function Page() {
               <div className="flex flex-wrap gap-2 overflow-x-scroll max-h-20">
                 {easySync.domains.map((i) => (
                   <button
+                    key={i}
                     type="button"
                     onClick={() => {
                       setEasySync((prev) => ({
@@ -291,7 +289,6 @@ export default function Page() {
                     className="group flex"
                   >
                     <Badge
-                      key={i}
                       className="flex items-center gap-1 pl-3 pr-1 group-hover:bg-red-500 cursor-pointer group-hover:text-white/80 transition-all duration-100"
                       //variant="destructive"
                     >
@@ -303,10 +300,9 @@ export default function Page() {
                 ))}
               </div>
               <input
-                type=""
+                type="hidden"
                 id="subjectAltNameData"
                 name="subjectAltNameData"
-                hidden
                 value={easySync.domains.flat().toString().replaceAll(",", ", ")}
               />
 
@@ -404,7 +400,7 @@ export default function Page() {
               </Label>
               <div className="flex flex-row space-x-1">
                 <Input
-                  type=""
+                  type="text"
                   id="subjectAltNameInputBox"
                   name="subjectAltNameInputBox"
                   value={easySync.domainInputBox}
@@ -440,6 +436,7 @@ export default function Page() {
               <div className="flex flex-wrap gap-2 overflow-x-scroll max-h-20">
                 {easySync.domains.map((i) => (
                   <button
+                    key={i}
                     type="button"
                     onClick={() => {
                       setEasySync((prev) => ({
@@ -450,7 +447,6 @@ export default function Page() {
                     className="group flex"
                   >
                     <Badge
-                      key={i}
                       className="flex items-center gap-1 pl-3 pr-1 group-hover:bg-red-500 cursor-pointer group-hover:text-white/80 transition-all duration-100"
                       //variant="destructive"
                     >
@@ -462,10 +458,9 @@ export default function Page() {
                 ))}
               </div>
               <input
-                type=""
+                type="hidden"
                 id="subjectAltNameData"
                 name="subjectAltNameData"
-                hidden
                 value={easySync.domains.flat().toString().replaceAll(",", ", ")}
               />
 

@@ -56,6 +56,12 @@ export async function generateCertificate(
         days: generateDays,
       }),
     });
+    if (!req.ok) {
+      const body = await req.text();
+      throw new Error(
+        `Signing proxy returned ${req.status} ${req.statusText}: ${body}`,
+      );
+    }
     const res = (await req.json()) as {
       error: string | null;
       pb: string;
@@ -78,16 +84,29 @@ export async function generateCertificate(
 }
 
 export async function revokeCertificate(revokeCertPublicPem: string) {
-  const req = await fetch(`${process.env.PROTECTION_PROXY_URL}/api/revoke`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      proxyToken: process.env.PROTECTION_PROXY_TOKEN,
-      cert: revokeCertPublicPem,
-    }),
-  });
+  let req: Response;
+  try {
+    req = await fetch(`${process.env.PROTECTION_PROXY_URL}/api/revoke`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        proxyToken: process.env.PROTECTION_PROXY_TOKEN,
+        cert: revokeCertPublicPem,
+      }),
+    });
+  } catch (e) {
+    throw new Error(
+      `Failed to reach revocation proxy: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+  if (!req.ok) {
+    const body = await req.text();
+    throw new Error(
+      `Revocation proxy returned ${req.status} ${req.statusText}: ${body}`,
+    );
+  }
   const res = (await req.json()) as {
     error: string | null;
     revoked: boolean;

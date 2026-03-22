@@ -45,8 +45,19 @@ Bun.serve({
             { status: 400 },
           );
         }
+        const daysNum = Number(days);
+        if (!Number.isFinite(daysNum) || !Number.isInteger(daysNum) || daysNum < 1 || daysNum > 200) {
+          return Response.json(
+            {
+              error: "Invalid or out-of-range days (must be an integer between 1 and 200)",
+              pb: null,
+              itemCN: null,
+            },
+            { status: 400 },
+          );
+        }
         try {
-          const result = await generateCertificate(csr, Number(days));
+          const result = await generateCertificate(csr, daysNum);
           return Response.json({ ...result, error: null });
         } catch (e) {
           return Response.json(
@@ -208,29 +219,50 @@ export async function generateCertificate(
     if (configContent) {
       await Bun.write(tempSavePath, configContent);
     }
-    const termGenerate = await spawnWithInput(
-      "openssl",
+    // Write CSR to a temp file so openssl ca can read it
+    const tempCsrPath = `/tmp/${saveUUID}.csr`;
+    const tempCertPath = `/tmp/${saveUUID}.pem`;
+    await Bun.write(tempCsrPath, csrText);
+
+    const caProc = Bun.spawn(
       [
-        "x509",
-        "-req",
+        "openssl",
+        "ca",
+        "-config",
+        "./certs/ca_db/openssl.cnf",
         "-in",
-        "-",
-        "-CA",
-        "./certs/master.pub.pem",
-        "-CAkey",
-        "./certs/master.key.pem",
-        "-CAcreateserial",
+        tempCsrPath,
+        "-out",
+        tempCertPath,
         "-days",
         generateDays.toString(),
-        "-sha256",
+        "-md",
+        "sha256",
         "-extfile",
         tempSavePath,
         "-extensions",
         "v3_server",
+        "-batch",
+        "-notext",
       ],
-      csrText,
+      { stdout: "pipe", stderr: "pipe" },
     );
-    return { pb: termGenerate.stdout, itemCN: extractedCN };
+    const [caStdout, caStderr] = await Promise.all([
+      new Response(caProc.stdout).text(),
+      new Response(caProc.stderr).text(),
+    ]);
+    const caExit = await caProc.exited;
+    if (caExit !== 0) {
+      throw new Error(`openssl ca exited with code ${caExit}: ${caStderr}`);
+    }
+
+    const certPem = await Bun.file(tempCertPath).text();
+
+    // Clean up temp CSR and cert files
+    if (await Bun.file(tempCsrPath).exists()) await unlink(tempCsrPath);
+    if (await Bun.file(tempCertPath).exists()) await unlink(tempCertPath);
+
+    return { pb: certPem, itemCN: extractedCN };
   } catch (e) {
     console.error(`generateCertificate failed: ${e}`);
     throw e;
@@ -244,22 +276,38 @@ async function revokeCertificate(cert: string) {
   if (!(await Bun.file(configPath).exists())) {
     throw new Error("CA database not initialized. Run init.sh first.");
   }
-  await spawnWithInput(
-    "openssl",
-    ["ca", "-config", configPath, "-revoke", "-batch", "--"],
-    cert,
-  );
-  await spawnWithInput(
-    "openssl",
-    [
-      "ca",
-      "-config",
-      configPath,
-      "-gencrl",
-      "-out",
-      "./certs/master.crl.pem",
-      "-batch",
-    ],
-    "",
-  );
+  const tempCertPath = `/tmp/revoke_${crypto.randomUUID()}.pem`;
+  try {
+    await Bun.write(tempCertPath, cert);
+    const revokeProc = Bun.spawn(
+      ["openssl", "ca", "-config", configPath, "-revoke", tempCertPath, "-batch"],
+      { stdout: "pipe", stderr: "pipe" },
+    );
+    const revokeStderr = await new Response(revokeProc.stderr).text();
+    const revokeExit = await revokeProc.exited;
+    if (revokeExit !== 0) {
+      throw new Error(`openssl ca -revoke exited with code ${revokeExit}: ${revokeStderr}`);
+    }
+
+    const crlProc = Bun.spawn(
+      [
+        "openssl",
+        "ca",
+        "-config",
+        configPath,
+        "-gencrl",
+        "-out",
+        "./certs/master.crl.pem",
+        "-batch",
+      ],
+      { stdout: "pipe", stderr: "pipe" },
+    );
+    const crlStderr = await new Response(crlProc.stderr).text();
+    const crlExit = await crlProc.exited;
+    if (crlExit !== 0) {
+      throw new Error(`openssl ca -gencrl exited with code ${crlExit}: ${crlStderr}`);
+    }
+  } finally {
+    if (await Bun.file(tempCertPath).exists()) await unlink(tempCertPath);
+  }
 }

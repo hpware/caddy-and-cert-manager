@@ -18,7 +18,8 @@ export default async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const hostname = req.nextUrl.hostname;
 
-  if (hostname === String(process.env.NEXT_PUBLIC_GUEST_RESOURCES_HOST)) {
+  const guestHost = process.env.NEXT_PUBLIC_GUEST_RESOURCES_HOST;
+  if (guestHost && hostname === guestHost) {
     if (path.startsWith("/auth/") || path.startsWith("/api/")) {
       return NextResponse.next();
     }

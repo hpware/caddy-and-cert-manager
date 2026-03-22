@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { BadgeCheck, BracketsIcon, LogOutIcon, Waypoints } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { authClient } from "@/components/auth-client";
 import { toast } from "sonner";
 
@@ -25,21 +25,21 @@ export default function NavBar() {
   const router = useRouter();
   const pathname = usePathname();
   const guestResourcesHost = process.env.NEXT_PUBLIC_GUEST_RESOURCES_HOST;
-  let guestHostname = guestResourcesHost;
-  if (guestResourcesHost) {
+  const guestHostname = useMemo(() => {
+    if (!guestResourcesHost) return guestResourcesHost;
     try {
       const parsed = new URL(
         guestResourcesHost.includes("://")
           ? guestResourcesHost
           : `https://${guestResourcesHost}`,
       );
-      guestHostname = parsed.hostname;
+      return parsed.hostname;
     } catch {
-      guestHostname = guestResourcesHost
+      return guestResourcesHost
         .replace(/^[a-z]+:\/\//, "")
         .replace(/[:/].*$/, "");
     }
-  }
+  }, [guestResourcesHost]);
   const [isGuestHost, setIsGuestHost] = useState(false);
   useEffect(() => {
     if (guestHostname && window.location.hostname === guestHostname) {

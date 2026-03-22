@@ -180,13 +180,9 @@ export async function generateCertificateWithRegen(
   if (fullChainPem) {
     fullChainPath = `./certs/created/${input.saveUUID}_fullchain.pem`;
     await fs.promises.writeFile(fullChainPath, fullChainPem);
-  } else {
-    try {
-      fullChainPath = await generateFullchain(input.saveUUID);
-    } catch {
-      fullChainPath = null;
-    }
   }
+  // When Regen does not supply its own chain, leave fullChainPath as null
+  // rather than appending the local CA certificate which may be incorrect.
 
   const itemCN =
     pickString(data, ["itemCN", "commonName", "cn", "name"]) ??

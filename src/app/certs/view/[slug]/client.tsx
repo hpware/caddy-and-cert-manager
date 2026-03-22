@@ -1,17 +1,14 @@
 "use client";
 
 import { certificates } from "@/components/drizzle/schema";
-import randomString from "@/components/randomString";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 export default function Client({
   dbData,
 }: {
   dbData: typeof certificates.$inferSelect;
 }) {
-  //const [generateAuthToken, setgenerateAuthToken] = useState("");
   return (
     <div className="flex flex-col items-center text-center justify-center absolute inset-0">
       <h1 className="text-2xl">Download Certificate</h1>
@@ -55,11 +52,6 @@ export default function Client({
             >
               <Button>View</Button>
             </Link>
-            {/*<Link
-              href={`/api/certs/get_file/${dbData.id}?type=public_fullchain`}
-            >
-              <Button>Download without auth</Button>
-            </Link> */}
           </div>
         </div>
       </div>

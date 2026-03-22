@@ -16,14 +16,11 @@ export const GET = async (req: Request) => {
     });
   } catch (e) {
     const errorId = randomString();
-    console.error(`[ERRID: ${errorId}] ${e}`);
+    console.error(`[ERRID: ${errorId}]`, e);
     return Response.json(
       {
         account: null,
-        error:
-          e instanceof Error
-            ? e.message
-            : `Internal Server Error, please view server logs for more info. ERRID: ${errorId}`,
+        error: `Internal Server Error. See ERRID: ${errorId}`,
       },
       { status: 500 },
     );
