@@ -51,6 +51,90 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 
+const blockedSubjectAltNameKeys = new Set([
+  " ",
+  "~",
+  "_",
+  "@",
+  "!",
+  "$",
+  "%",
+  "(",
+  ")",
+  "+",
+  "=",
+]);
+
+function SubjectAltNameInput({
+  label,
+  domainInputBox,
+  domains,
+  onDomainInputChange,
+  onSubmit,
+  onRemove,
+}: {
+  label: string;
+  domainInputBox: string;
+  domains: string[];
+  onDomainInputChange: (value: string) => void;
+  onSubmit: () => void;
+  onRemove: (value: string) => void;
+}) {
+  return (
+    <>
+      <Label htmlFor="subjectAltNameInputBox">{label}</Label>
+      <div className="flex flex-row space-x-1">
+        <Input
+          type="text"
+          id="subjectAltNameInputBox"
+          name="subjectAltNameInputBox"
+          value={domainInputBox}
+          onChange={(e) => {
+            onDomainInputChange(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onSubmit();
+              return;
+            }
+
+            if (blockedSubjectAltNameKeys.has(e.key)) {
+              e.preventDefault();
+            }
+          }}
+        />
+        <Button type="button" onClick={onSubmit}>
+          +
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-2 overflow-x-scroll max-h-20">
+        {domains.map((domain) => (
+          <button
+            key={domain}
+            type="button"
+            onClick={() => {
+              onRemove(domain);
+            }}
+            className="group flex"
+          >
+            <Badge className="flex items-center gap-1 pl-3 pr-1 group-hover:bg-red-500 cursor-pointer group-hover:text-white/80 transition-all duration-100">
+              <span className="group-hover:line-through">{domain}</span>
+              <XIcon className="w-4 h-4 hover:stroke-red-500 transition-all duration-100 cursor-pointer" />
+            </Badge>
+          </button>
+        ))}
+      </div>
+      <input
+        type="hidden"
+        id="subjectAltNameData"
+        name="subjectAltNameData"
+        value={domains.join(", ")}
+      />
+    </>
+  );
+}
+
 export default function Page() {
   const [dialogStatus, setDialogStatus] = useState<string>("easy");
   const [openTabList, setOpenTabList] = useState<string>("server");
@@ -58,6 +142,7 @@ export default function Page() {
     certUrl: "",
     apiKey: "",
   });
+  const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
   const [easySync, setEasySync] = useState<{
     city: string;
     country: string;
@@ -132,8 +217,9 @@ export default function Page() {
     }
     setRegenSettings({
       certUrl: getSettings.data.certUrl ?? "",
-      apiKey: getSettings.data.apiKey ?? "",
+      apiKey: "",
     });
+    setHasStoredApiKey(getSettings.data.hasApiKey);
   }, [getSettings.data]);
   const handleSubmitCreate = useMutation({
     mutationFn: async (data: FormData) => {
@@ -163,7 +249,10 @@ export default function Page() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(regenSettings),
+        body: JSON.stringify({
+          certUrl: regenSettings.certUrl,
+          ...(regenSettings.apiKey ? { apiKey: regenSettings.apiKey } : {}),
+        }),
       });
       const res = await req.json();
       if (!req.ok || !res.ok) {
@@ -172,6 +261,13 @@ export default function Page() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["regenSettings"] });
+      setRegenSettings((prev) => ({
+        ...prev,
+        apiKey: "",
+      }));
+      if (regenSettings.apiKey) {
+        setHasStoredApiKey(true);
+      }
       toast.success("Settings saved");
     },
     onError: (error: Error) => {
@@ -237,73 +333,23 @@ export default function Page() {
                 name="CN"
                 value={easySync.domains[0]}
               />
-              <Label htmlFor="subjectAltNameInputBox">
-                Your Domains or IP Addresses:
-              </Label>
-              <div className="flex flex-row space-x-1">
-                <Input
-                  type="text"
-                  id="subjectAltNameInputBox"
-                  name="subjectAltNameInputBox"
-                  value={easySync.domainInputBox}
-                  onChange={(e) => {
-                    setEasySync({
-                      ...easySync,
-                      domainInputBox: e.target.value,
-                    });
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      submitIPAddressToAddToArray();
-                    }
-                    if (e.key === " ") e.preventDefault();
-                    if (e.key === "~") e.preventDefault();
-                    if (e.key === "_") e.preventDefault();
-                    if (e.key === "@") e.preventDefault();
-                    if (e.key === "!") e.preventDefault();
-                    if (e.key === "$") e.preventDefault();
-
-                    if (e.key === "%") e.preventDefault();
-                    if (e.key === "(") e.preventDefault();
-                    if (e.key === ")") e.preventDefault();
-                    if (e.key === "+") e.preventDefault();
-                    if (e.key === "=") e.preventDefault();
-                  }}
-                />
-                <Button type="button" onClick={submitIPAddressToAddToArray}>
-                  +
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2 overflow-x-scroll max-h-20">
-                {easySync.domains.map((i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => {
-                      setEasySync((prev) => ({
-                        ...prev,
-                        domains: prev.domains.filter((d) => d !== i),
-                      }));
-                    }}
-                    className="group flex"
-                  >
-                    <Badge
-                      className="flex items-center gap-1 pl-3 pr-1 group-hover:bg-red-500 cursor-pointer group-hover:text-white/80 transition-all duration-100"
-                      //variant="destructive"
-                    >
-                      <span className="group-hover:line-through">{i}</span>
-
-                      <XIcon className="w-4 h-4 hover:stroke-red-500 transition-all duration-100 cursor-pointer" />
-                    </Badge>
-                  </button>
-                ))}
-              </div>
-              <input
-                type="hidden"
-                id="subjectAltNameData"
-                name="subjectAltNameData"
-                value={easySync.domains.flat().toString().replaceAll(",", ", ")}
+              <SubjectAltNameInput
+                label="Your Domains or IP Addresses:"
+                domainInputBox={easySync.domainInputBox}
+                domains={easySync.domains}
+                onDomainInputChange={(value) => {
+                  setEasySync({
+                    ...easySync,
+                    domainInputBox: value,
+                  });
+                }}
+                onSubmit={submitIPAddressToAddToArray}
+                onRemove={(value) => {
+                  setEasySync((prev) => ({
+                    ...prev,
+                    domains: prev.domains.filter((domain) => domain !== value),
+                  }));
+                }}
               />
 
               <Label htmlFor="O">Your Organization:</Label>
@@ -320,11 +366,10 @@ export default function Page() {
                 }}
               />
               <Input
-                type="text"
+                type="hidden"
                 id="OU"
                 name="OU"
                 value={easySync.organization}
-                hidden
               />
 
               <Label htmlFor="L">Your City or State:</Label>
@@ -342,11 +387,10 @@ export default function Page() {
                 }}
               />
               <Input
-                type="text"
+                type="hidden"
                 id="ST"
                 name="ST"
                 value={easySync.city}
-                hidden
               />
 
               {/** 選擇國家，限制兩位英文 */}
@@ -395,73 +439,23 @@ export default function Page() {
                   if (e.key === "Enter") e.preventDefault();
                 }}
               />
-              <Label htmlFor="subjectAltNameInputBox">
-                Subject Alt Names:{" "}
-              </Label>
-              <div className="flex flex-row space-x-1">
-                <Input
-                  type="text"
-                  id="subjectAltNameInputBox"
-                  name="subjectAltNameInputBox"
-                  value={easySync.domainInputBox}
-                  onChange={(e) => {
-                    setEasySync({
-                      ...easySync,
-                      domainInputBox: e.target.value,
-                    });
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      submitIPAddressToAddToArray();
-                    }
-                    if (e.key === " ") e.preventDefault();
-                    if (e.key === "~") e.preventDefault();
-                    if (e.key === "_") e.preventDefault();
-                    if (e.key === "@") e.preventDefault();
-                    if (e.key === "!") e.preventDefault();
-                    if (e.key === "$") e.preventDefault();
-                    if (e.key === "%") e.preventDefault();
-                    if (e.key === "(") e.preventDefault();
-                    if (e.key === ")") e.preventDefault();
-                    if (e.key === "+") e.preventDefault();
-                    if (e.key === "=") e.preventDefault();
-                  }}
-                />
-                <Button type="button" onClick={submitIPAddressToAddToArray}>
-                  +
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap gap-2 overflow-x-scroll max-h-20">
-                {easySync.domains.map((i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => {
-                      setEasySync((prev) => ({
-                        ...prev,
-                        domains: prev.domains.filter((d) => d !== i),
-                      }));
-                    }}
-                    className="group flex"
-                  >
-                    <Badge
-                      className="flex items-center gap-1 pl-3 pr-1 group-hover:bg-red-500 cursor-pointer group-hover:text-white/80 transition-all duration-100"
-                      //variant="destructive"
-                    >
-                      <span className="group-hover:line-through">{i}</span>
-
-                      <XIcon className="w-4 h-4 hover:stroke-red-500 transition-all duration-100 cursor-pointer" />
-                    </Badge>
-                  </button>
-                ))}
-              </div>
-              <input
-                type="hidden"
-                id="subjectAltNameData"
-                name="subjectAltNameData"
-                value={easySync.domains.flat().toString().replaceAll(",", ", ")}
+              <SubjectAltNameInput
+                label="Subject Alt Names:"
+                domainInputBox={easySync.domainInputBox}
+                domains={easySync.domains}
+                onDomainInputChange={(value) => {
+                  setEasySync({
+                    ...easySync,
+                    domainInputBox: value,
+                  });
+                }}
+                onSubmit={submitIPAddressToAddToArray}
+                onRemove={(value) => {
+                  setEasySync((prev) => ({
+                    ...prev,
+                    domains: prev.domains.filter((domain) => domain !== value),
+                  }));
+                }}
               />
 
               <Label htmlFor="O">O (Organization Name):</Label>
@@ -853,7 +847,11 @@ export default function Page() {
                 id="apiKey"
                 type="password"
                 value={regenSettings.apiKey}
-                placeholder="token"
+                placeholder={
+                  hasStoredApiKey
+                    ? "Stored API key is set. Enter a new token to rotate it."
+                    : "token"
+                }
                 onChange={(e) =>
                   setRegenSettings((prev) => ({
                     ...prev,
@@ -865,6 +863,12 @@ export default function Page() {
                 Requests send both `Authorization` and `API_KEY` headers as
                 `BEARER TOKEN {"${TOKEN}"}`.
               </p>
+              {hasStoredApiKey && (
+                <p className="text-xs text-muted-foreground">
+                  A token is already stored server-side. Leave this blank to keep
+                  it unchanged.
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap gap-3">
               <Button

@@ -24,7 +24,6 @@ export const GET = async (req: Request) => {
     return Response.json(
       {
         certUrl: "",
-        apiKey: "",
         hasApiKey: false,
         error: `Internal Server Error, please view server logs for more info. ERRID: ${errorId}`,
       },
@@ -41,9 +40,13 @@ export const PUT = async (req: Request) => {
 
   try {
     const body = (await req.json()) as { certUrl?: string; apiKey?: string };
+    const currentSettings = await getRegenSettings();
     await saveRegenSettings({
       certUrl: body.certUrl?.trim() ?? "",
-      apiKey: body.apiKey?.trim() ?? "",
+      apiKey:
+        typeof body.apiKey === "string"
+          ? body.apiKey.trim()
+          : currentSettings.apiKey,
     });
     return Response.json({ ok: true, error: null });
   } catch (e) {
@@ -58,4 +61,3 @@ export const PUT = async (req: Request) => {
     );
   }
 };
-
