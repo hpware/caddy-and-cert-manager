@@ -1,14 +1,17 @@
 # install
 FROM oven/bun:latest AS builder
 WORKDIR /app
+COPY package.json bun.lock* ./
+RUN bun install
 COPY . .
-RUN bun install && bun build index.ts --minify --target=bun --outfile=index.js
+RUN bun build index.ts --minify --target=bun --outfile=index.js
 
 # prod
 FROM oven/bun:debian
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y libssl-dev openssl curl && \
+RUN apt-get update && apt-get install -y --no-install-recommends libssl-dev openssl curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
     groupadd -r porca && useradd -r -g porca -d /app porca && \
     chown -R porca:porca /app
 ENV NODE_ENV=production

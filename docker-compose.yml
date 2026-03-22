@@ -21,7 +21,7 @@ services:
       postgres:
         condition: service_healthy
       porca:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - ./certs/created:/app/certs/created
       - ./certs/master.pub.pem:/app/certs/master.pub.pem:ro

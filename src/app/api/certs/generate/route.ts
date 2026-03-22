@@ -59,16 +59,6 @@ export const POST = async (request: NextRequest) => {
             C ? C.toString() : "TW",
           );
 
-      // save into db
-      await db
-        .insert(schema.certificates)
-        .values({
-          id: saveUUID,
-          name: CN.toString(),
-          privateKey: true,
-        })
-        .execute();
-
       const localCert = shouldUseRegen
         ? null
         : await certTool.generateCertificate(
@@ -79,6 +69,16 @@ export const POST = async (request: NextRequest) => {
       const fullChainPath = shouldUseRegen
         ? regenCert!.fullChainPath
         : await certTool.generateFullchain(saveUUID);
+
+      // save into db only after successful certificate generation
+      await db
+        .insert(schema.certificates)
+        .values({
+          id: saveUUID,
+          name: CN.toString(),
+          privateKey: true,
+        })
+        .execute();
       return Response.json({
         ok: true,
         uuidSavePath: saveUUID,

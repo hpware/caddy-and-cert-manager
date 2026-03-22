@@ -25,23 +25,27 @@ export async function getRegenSettings(): Promise<RegenSettings> {
 }
 
 export async function saveRegenSettings(settings: RegenSettings) {
-  await db
-    .insert(kvData)
-    .values({ key: CERT_URL_KEY, value: settings.certUrl })
-    .onConflictDoUpdate({
-      target: kvData.key,
-      set: {
-        value: settings.certUrl,
-      },
-    });
+  await db.transaction(async (tx) => {
+    await tx
+      .insert(kvData)
+      .values({ key: CERT_URL_KEY, value: settings.certUrl })
+      .onConflictDoUpdate({
+        target: kvData.key,
+        set: {
+          value: settings.certUrl,
+          updated_at: new Date(),
+        },
+      });
 
-  await db
-    .insert(kvData)
-    .values({ key: API_KEY_KEY, value: settings.apiKey })
-    .onConflictDoUpdate({
-      target: kvData.key,
-      set: {
-        value: settings.apiKey,
-      },
-    });
+    await tx
+      .insert(kvData)
+      .values({ key: API_KEY_KEY, value: settings.apiKey })
+      .onConflictDoUpdate({
+        target: kvData.key,
+        set: {
+          value: settings.apiKey,
+          updated_at: new Date(),
+        },
+      });
+  });
 }

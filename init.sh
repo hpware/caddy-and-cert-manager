@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 # Please change these, if not they will be the default
 ORG_NAME="Generic CertManager"
 CN_NAME="Generic CertManager"
@@ -27,7 +28,7 @@ fi
 mkdir -p ./certs/created
 mkdir -p ./certs/ca_db
 openssl genrsa -out ./certs/master.key.pem 4096
-openssl req -x509 -new -nodes -key ./certs/master.key.pem -sha512 -days ${EXPIRES_AT} -out ./certs/master.pub.pem -subj "/C=${COUNTRY_TWO_DIGITS}/ST=${LOCATION}/L=${LOCATION}/O=${ORG_NAME}/CN=${CN_NAME}"
+openssl req -x509 -new -nodes -key ./certs/master.key.pem -sha512 -days "${EXPIRES_AT}" -out ./certs/master.pub.pem -subj "/C=${COUNTRY_TWO_DIGITS}/ST=${LOCATION}/L=${LOCATION}/O=${ORG_NAME}/CN=${CN_NAME}"
 
 # bootstrap CA database and initial empty CRL
 touch ./certs/ca_db/index.txt

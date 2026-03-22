@@ -22,7 +22,7 @@ docker compose up -d
 and you are done! You now can register an account (if you have SSO, login with that!), and you have your own CA, just make sure that you and your family all trust that master certificate!
 
 ## Will your master CA private key get leaked if the next Next.js vuln happens?
-If you have properly secured your server, no it won't this system (porca) is designed to only let the Next.js application request to sign a CSR request, revoking a certificate, and get a CRL only. The attacker only can create new certificates and revoke certificates via curl, and cannot get the CA private key, you can revoke the certificates later, if your app's certificates got revoked, you should re-roll those certificates, if you have the auto-update CA script, all of this is will automaticly re-issue the certificates to those clients.
+If you have properly secured your server, no. The signing proxy (porca) only allows the Next.js application to request CSR signing, revoke certificates, and fetch the certificate revocation list (CRL). An attacker could only create or revoke certificates via curl; they cannot access the CA private key. If any of your app's certificates are revoked, you must re-issue them. If you have the auto-update CA script configured, it will automatically re-issue certificates to affected clients.
 
 ## Certificate Management
 > [!NOTE]

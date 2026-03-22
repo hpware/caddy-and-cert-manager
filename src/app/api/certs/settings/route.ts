@@ -15,7 +15,6 @@ export const GET = async (req: Request) => {
     const settings = await getRegenSettings();
     return Response.json({
       certUrl: settings.certUrl,
-      apiKey: settings.apiKey,
       hasApiKey: settings.apiKey.length > 0,
       error: null,
     });

@@ -5,6 +5,7 @@ import * as schema from "@/components/drizzle/schema";
 import randomString from "@/components/randomString";
 import { eq } from "drizzle-orm";
 import fs from "node:fs";
+import path from "node:path";
 
 export const DELETE = async (req: Request) => {
   // add auth
@@ -13,8 +14,15 @@ export const DELETE = async (req: Request) => {
     return new Response("Unauthorized", { status: 401 });
   }
   const body = await req.json();
+  if (!body.id || typeof body.id !== "string" || !/^[A-Za-z0-9_-]+$/.test(body.id)) {
+    return new Response("Invalid certificate id", { status: 400 });
+  }
   try {
-    const certPath = `./certs/created/${body.id}_pub.pem`;
+    const baseDir = path.resolve("./certs/created");
+    const certPath = path.resolve(baseDir, `${body.id}_pub.pem`);
+    if (!certPath.startsWith(baseDir + path.sep)) {
+      return new Response("Invalid certificate id", { status: 400 });
+    }
     const publicKey = await fs.promises.readFile(certPath, "utf8");
     await revokeCertificateWithRegen(publicKey);
     await db
