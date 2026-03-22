@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import * as certTool from "@/components/core/certTooler";
+import { generateCertificateWithRegen } from "@/components/core/regenClient";
+import { getRegenSettings } from "@/components/core/regenSettings";
 import { db } from "@/components/drizzle/db";
 import * as schema from "@/components/drizzle/schema";
 import checkUserLoginStatus from "@/components/checkUserLoginStatusAPI";
@@ -24,20 +26,51 @@ export const POST = async (request: NextRequest) => {
     }
     const formData = await request.formData();
     const { mode, Days } = Object.fromEntries(formData);
+    const regenSettings = await getRegenSettings();
+    const shouldUseRegen =
+      regenSettings.certUrl.length > 0 && regenSettings.apiKey.length > 0;
     if (mode === "easy") {
       const { CN, OU, O, L, ST, C } = Object.fromEntries(formData);
       const saveUUID = crypto.randomUUID();
-      const certCsrAndPrivateKey = await certTool.generateCSR(
-        saveUUID,
-        CN.toString(),
-        OU ? OU.toString() : "BunCCR",
-        O ? O.toString() : "BunCCR",
-        L ? L.toString() : "Da-an District",
-        ST ? ST.toString() : "Taipei City",
-        C ? C.toString() : "TW",
-      );
+      const regenCert = shouldUseRegen
+        ? await generateCertificateWithRegen({
+            mode: "easy",
+            days: Number(Days),
+            saveUUID,
+            cn: CN.toString(),
+            ou: OU ? OU.toString() : "BunCCR",
+            o: O ? O.toString() : "BunCCR",
+            l: L ? L.toString() : "Da-an District",
+            st: ST ? ST.toString() : "Taipei City",
+            c: C ? C.toString() : "TW",
+            subjectAltNameData:
+              formData.get("subjectAltNameData")?.toString() ?? "",
+          })
+        : null;
+      const certCsrAndPrivateKey = shouldUseRegen
+        ? null
+        : await certTool.generateCSR(
+            saveUUID,
+            CN.toString(),
+            OU ? OU.toString() : "BunCCR",
+            O ? O.toString() : "BunCCR",
+            L ? L.toString() : "Da-an District",
+            ST ? ST.toString() : "Taipei City",
+            C ? C.toString() : "TW",
+          );
 
-      // save into db
+      const localCert = shouldUseRegen
+        ? null
+        : await certTool.generateCertificate(
+            certCsrAndPrivateKey!.csr,
+            Number(Days),
+            saveUUID,
+          );
+      const fullChainPath = shouldUseRegen
+        ? regenCert!.fullChainPath
+        : await certTool.generateFullchain(saveUUID);
+
+      // save into db only after successful certificate generation
       await db
         .insert(schema.certificates)
         .values({
@@ -46,42 +79,55 @@ export const POST = async (request: NextRequest) => {
           privateKey: true,
         })
         .execute();
-
-      const cert = await certTool.generateCertificate(
-        certCsrAndPrivateKey.csr,
-        Number(Days),
-        saveUUID,
-      );
-      const fullChainPath = await certTool.generateFullchain(saveUUID);
       return Response.json({
         ok: true,
         uuidSavePath: saveUUID,
-        certPublicKey: cert.pb,
-        certPrivateKey: certCsrAndPrivateKey.privateKey,
+        certPublicKey: shouldUseRegen
+          ? regenCert!.certPublicKey
+          : localCert!.pb,
+        certPrivateKey: shouldUseRegen
+          ? regenCert!.certPrivateKey
+          : certCsrAndPrivateKey!.privateKey,
         fullChainPath,
       });
     } else if (mode === "csr") {
       const { CSR } = Object.fromEntries(formData);
       const saveUUID = crypto.randomUUID();
-      const generateCert = await certTool.generateCertificate(
-        await (CSR as File).text(),
-        Number(Days),
-        saveUUID,
-      );
+      const regenCert = shouldUseRegen
+        ? await generateCertificateWithRegen({
+            mode: "csr",
+            days: Number(Days),
+            saveUUID,
+            csrText: await (CSR as File).text(),
+            subjectAltNameData:
+              formData.get("subjectAltNameData")?.toString() ?? "",
+          })
+        : null;
+      const localCert = shouldUseRegen
+        ? null
+        : await certTool.generateCertificate(
+            await (CSR as File).text(),
+            Number(Days),
+            saveUUID,
+          );
       // save into db
       await db
         .insert(schema.certificates)
         .values({
           id: saveUUID,
-          name: generateCert.itemCN,
+          name: shouldUseRegen ? regenCert!.itemCN : localCert!.itemCN,
           privateKey: false,
         })
         .execute();
-      const fullChainPath = await certTool.generateFullchain(saveUUID);
+      const fullChainPath = shouldUseRegen
+        ? regenCert!.fullChainPath
+        : await certTool.generateFullchain(saveUUID);
       return Response.json({
         ok: true,
         uuidSavePath: saveUUID,
-        certPublicKey: generateCert.pb,
+        certPublicKey: shouldUseRegen
+          ? regenCert!.certPublicKey
+          : localCert!.pb,
         certPrivateKey: null,
         fullChainPath,
         error: null,

@@ -1,5 +1,9 @@
 {
+<<<<<<< Updated upstream
   "id": "73ea26ca-4f87-4918-b61c-3aedb975c25c",
+=======
+  "id": "fea0c36c-f465-4ed3-9b4b-ed6875b41e47",
+>>>>>>> Stashed changes
   "prevId": "9e166f56-0bb7-4285-86a1-68fe56655165",
   "version": "7",
   "dialect": "postgresql",
@@ -109,6 +113,7 @@
         "account_user_id_user_id_fk": {
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
+<<<<<<< Updated upstream
           "tableTo": "user",
           "columnsFrom": [
             "user_id"
@@ -118,6 +123,13 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+=======
+          "columnsFrom": ["user_id"],
+          "tableTo": "user",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+>>>>>>> Stashed changes
         }
       },
       "compositePrimaryKeys": {},
@@ -226,10 +238,15 @@
       "uniqueConstraints": {
         "kv_data_key_unique": {
           "name": "kv_data_key_unique",
+<<<<<<< Updated upstream
           "nullsNotDistinct": false,
           "columns": [
             "key"
           ]
+=======
+          "columns": ["key"],
+          "nullsNotDistinct": false
+>>>>>>> Stashed changes
         }
       },
       "policies": {},
@@ -384,6 +401,7 @@
         "session_user_id_user_id_fk": {
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
+<<<<<<< Updated upstream
           "tableTo": "user",
           "columnsFrom": [
             "user_id"
@@ -393,16 +411,28 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+=======
+          "columnsFrom": ["user_id"],
+          "tableTo": "user",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+>>>>>>> Stashed changes
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "session_token_unique": {
           "name": "session_token_unique",
+<<<<<<< Updated upstream
           "nullsNotDistinct": false,
           "columns": [
             "token"
           ]
+=======
+          "columns": ["token"],
+          "nullsNotDistinct": false
+>>>>>>> Stashed changes
         }
       },
       "policies": {},
@@ -511,10 +541,15 @@
       "uniqueConstraints": {
         "user_email_unique": {
           "name": "user_email_unique",
+<<<<<<< Updated upstream
           "nullsNotDistinct": false,
           "columns": [
             "email"
           ]
+=======
+          "columns": ["email"],
+          "nullsNotDistinct": false
+>>>>>>> Stashed changes
         }
       },
       "policies": {},

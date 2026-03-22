@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Highlight, themes } from "prism-react-renderer";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useMutation,
   useInfiniteQuery,
@@ -20,6 +20,7 @@ import {
   GlobeIcon,
   KeyRoundIcon,
   Trash2Icon,
+  XIcon,
 } from "lucide-react";
 import {
   Dialog,
@@ -36,9 +37,10 @@ import {
   ClipboardIcon,
   Download,
   FileBadgeIcon,
+  SaveIcon,
   PenLine,
 } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -46,11 +48,112 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+
+const blockedSubjectAltNameKeys = new Set([
+  " ",
+  "~",
+  "_",
+  "@",
+  "!",
+  "$",
+  "%",
+  "(",
+  ")",
+  "+",
+  "=",
+]);
+
+function SubjectAltNameInput({
+  label,
+  domainInputBox,
+  domains,
+  onDomainInputChange,
+  onSubmit,
+  onRemove,
+}: {
+  label: string;
+  domainInputBox: string;
+  domains: string[];
+  onDomainInputChange: (value: string) => void;
+  onSubmit: () => void;
+  onRemove: (value: string) => void;
+}) {
+  return (
+    <>
+      <Label htmlFor="subjectAltNameInputBox">{label}</Label>
+      <div className="flex flex-row space-x-1">
+        <Input
+          type="text"
+          id="subjectAltNameInputBox"
+          name="subjectAltNameInputBox"
+          value={domainInputBox}
+          onChange={(e) => {
+            onDomainInputChange(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onSubmit();
+              return;
+            }
+
+            if (blockedSubjectAltNameKeys.has(e.key)) {
+              e.preventDefault();
+            }
+          }}
+        />
+        <Button type="button" onClick={onSubmit}>
+          +
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-2 overflow-x-scroll max-h-20">
+        {domains.map((domain) => (
+          <button
+            key={domain}
+            type="button"
+            onClick={() => {
+              onRemove(domain);
+            }}
+            className="group flex"
+          >
+            <Badge className="flex items-center gap-1 pl-3 pr-1 group-hover:bg-red-500 cursor-pointer group-hover:text-white/80 transition-all duration-100">
+              <span className="group-hover:line-through">{domain}</span>
+              <XIcon className="w-4 h-4 hover:stroke-red-500 transition-all duration-100 cursor-pointer" />
+            </Badge>
+          </button>
+        ))}
+      </div>
+      <input
+        type="hidden"
+        id="subjectAltNameData"
+        name="subjectAltNameData"
+        value={domains.join(", ")}
+      />
+    </>
+  );
+}
 
 export default function Page() {
   const [dialogStatus, setDialogStatus] = useState<string>("easy");
   const [openTabList, setOpenTabList] = useState<string>("server");
-  const [easySync, setEasySync] = useState({
+  const [regenSettings, setRegenSettings] = useState({
+    certUrl: "",
+    apiKey: "",
+  });
+  const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
+  const [easySync, setEasySync] = useState<{
+    city: string;
+    country: string;
+    commonName: string;
+    organization: string;
+    organizationUnit: string;
+    locality: string;
+    revokable: boolean;
+    domains: string[];
+    domainInputBox: string;
+  }>({
     city: "",
     country: "TW",
     commonName: "",
@@ -58,6 +161,8 @@ export default function Page() {
     organizationUnit: "",
     locality: "",
     revokable: true,
+    domains: [],
+    domainInputBox: "",
   });
   const getMasterCert = useQuery({
     queryFn: async () => {
@@ -74,8 +179,48 @@ export default function Page() {
     },
     queryKey: ["masterCert"],
   });
+  const getSettings = useQuery({
+    queryFn: async () => {
+      const req = await fetch("/api/certs/settings");
+      const res = await req.json();
+      if (!req.ok) {
+        throw new Error(res.error || "Failed to load settings");
+      }
+      return res as {
+        certUrl: string;
+        hasApiKey: boolean;
+        error: string | null;
+      };
+    },
+    queryKey: ["regenSettings"],
+  });
+  const getRegenAccount = useQuery({
+    enabled: false,
+    queryFn: async () => {
+      const req = await fetch("/api/certs/settings/account");
+      const res = await req.json();
+      if (!req.ok) {
+        throw new Error(res.error || "Failed to fetch account");
+      }
+      return res as {
+        account: Record<string, unknown>;
+        error: string | null;
+      };
+    },
+    queryKey: ["regenAccount"],
+  });
   const router = useRouter();
   const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!getSettings.data) {
+      return;
+    }
+    setRegenSettings({
+      certUrl: getSettings.data.certUrl ?? "",
+      apiKey: "",
+    });
+    setHasStoredApiKey(getSettings.data.hasApiKey);
+  }, [getSettings.data]);
   const handleSubmitCreate = useMutation({
     mutationFn: async (data: FormData) => {
       toast.promise(
@@ -97,6 +242,53 @@ export default function Page() {
       );
     },
   });
+  const saveSettings = useMutation({
+    mutationFn: async () => {
+      const req = await fetch("/api/certs/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          certUrl: regenSettings.certUrl,
+          ...(regenSettings.apiKey ? { apiKey: regenSettings.apiKey } : {}),
+        }),
+      });
+      const res = await req.json();
+      if (!req.ok || !res.ok) {
+        throw new Error(res.error || "Failed to save settings");
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["regenSettings"] });
+      setRegenSettings((prev) => ({
+        ...prev,
+        apiKey: "",
+      }));
+      if (regenSettings.apiKey) {
+        setHasStoredApiKey(true);
+      }
+      toast.success("Settings saved");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+  const submitIPAddressToAddToArray = () => {
+    if (easySync.domainInputBox.length === 0) {
+      toast.error("Cannot submit empty string!");
+      return;
+    }
+    if (easySync.domains.find((d) => d === easySync.domainInputBox)) {
+      toast.error("This IP address or domain have already been added!");
+      return;
+    }
+    setEasySync((prev) => ({
+      ...prev,
+      domainInputBox: "",
+      domains: [...prev.domains, prev.domainInputBox],
+    }));
+  };
   const dialogStuff = [
     {
       icon: BadgePlusIcon,
@@ -135,15 +327,28 @@ export default function Page() {
           />
           {dialogStatus === "easy" ? (
             <>
-              <Label htmlFor="CN">Your Domain or IP Addresses:</Label>
-              <Input
-                type=""
+              <input
+                type="hidden"
                 id="CN"
                 name="CN"
-                required
-                value={easySync.commonName}
-                onChange={(e) => {
-                  setEasySync({ ...easySync, commonName: e.target.value });
+                value={easySync.domains[0]}
+              />
+              <SubjectAltNameInput
+                label="Your Domains or IP Addresses:"
+                domainInputBox={easySync.domainInputBox}
+                domains={easySync.domains}
+                onDomainInputChange={(value) => {
+                  setEasySync({
+                    ...easySync,
+                    domainInputBox: value,
+                  });
+                }}
+                onSubmit={submitIPAddressToAddToArray}
+                onRemove={(value) => {
+                  setEasySync((prev) => ({
+                    ...prev,
+                    domains: prev.domains.filter((domain) => domain !== value),
+                  }));
                 }}
               />
 
@@ -156,13 +361,15 @@ export default function Page() {
                 onChange={(e) => {
                   setEasySync({ ...easySync, organization: e.target.value });
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
               />
               <Input
-                type="text"
+                type="hidden"
                 id="OU"
                 name="OU"
                 value={easySync.organization}
-                hidden
               />
 
               <Label htmlFor="L">Your City or State:</Label>
@@ -175,13 +382,15 @@ export default function Page() {
                 onChange={(e) => {
                   setEasySync({ ...easySync, city: e.target.value });
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
               />
               <Input
-                type="text"
+                type="hidden"
                 id="ST"
                 name="ST"
                 value={easySync.city}
-                hidden
               />
 
               {/** 選擇國家，限制兩位英文 */}
@@ -198,6 +407,9 @@ export default function Page() {
                       country: e.target.value.toUpperCase(),
                     });
                   }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
                 }}
               />
               <input
@@ -223,6 +435,27 @@ export default function Page() {
                     commonName: e.target.value,
                   });
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
+              />
+              <SubjectAltNameInput
+                label="Subject Alt Names:"
+                domainInputBox={easySync.domainInputBox}
+                domains={easySync.domains}
+                onDomainInputChange={(value) => {
+                  setEasySync({
+                    ...easySync,
+                    domainInputBox: value,
+                  });
+                }}
+                onSubmit={submitIPAddressToAddToArray}
+                onRemove={(value) => {
+                  setEasySync((prev) => ({
+                    ...prev,
+                    domains: prev.domains.filter((domain) => domain !== value),
+                  }));
+                }}
               />
 
               <Label htmlFor="O">O (Organization Name):</Label>
@@ -233,6 +466,9 @@ export default function Page() {
                 value={easySync.organization}
                 onChange={(e) => {
                   setEasySync({ ...easySync, organization: e.target.value });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
                 }}
               />
 
@@ -248,6 +484,9 @@ export default function Page() {
                     organizationUnit: e.target.value,
                   });
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
               />
 
               <Label htmlFor="L">L (Locality):</Label>
@@ -259,6 +498,9 @@ export default function Page() {
                 onChange={(e) => {
                   setEasySync({ ...easySync, locality: e.target.value });
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
               />
 
               <Label htmlFor="ST">ST (State):</Label>
@@ -269,6 +511,9 @@ export default function Page() {
                 value={easySync.city} // STOP!!! FUCK STOP CHANGING IT TO STATE
                 onChange={(e) => {
                   setEasySync({ ...easySync, city: e.target.value }); // don't fucking change it to state Zed autocompelete!!!!
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
                 }}
               />
 
@@ -286,6 +531,9 @@ export default function Page() {
                     });
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
               />
 
               <div className="flex items-center space-x-3">
@@ -297,7 +545,10 @@ export default function Page() {
                   defaultChecked={true}
                   value={easySync.revokable ? 1 : 0}
                   onChange={(e) =>
-                    setEasySync({ ...easySync, revokable: e.target.checked })
+                    setEasySync({
+                      ...easySync,
+                      revokable: e.target.checked,
+                    })
                   }
                 />
               </div>
@@ -440,8 +691,14 @@ export default function Page() {
   return (
     <div className="m-3">
       <h1 className="text-2xl font-bold">Certificate Manager</h1>
-      <div className="flex flex-col md:flex-row justify-between pb-2">
-        <div>
+      <Tabs value={openTabList} onValueChange={setOpenTabList}>
+        <TabsList className="my-3">
+          <TabsTrigger value="server">Server</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="server" className="space-y-3">
+          <div className="flex flex-col md:flex-row justify-between pb-2">
+        {/*<div>
           <Select>
             <SelectTrigger>
               <SelectValue placeholder="Easy" />
@@ -451,37 +708,39 @@ export default function Page() {
               <SelectItem value="advanced">Advanced</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <div className="auto-cols-fr gap-4 justify-center">
-          {dialogStuff.map((i) => (
-            <Dialog key={i.title}>
-              <DialogTrigger>
-                <Button className="cursor-pointer hover:bg-accent group transition-all duration-300">
-                  {i.title}{" "}
-                  <i.icon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{i.title}</DialogTitle>
-                  <DialogDescription>{i.description}</DialogDescription>
-                </DialogHeader>
-                {i.reactLogic}
-              </DialogContent>
-            </Dialog>
-          ))}
-          <Button
-            className="cursor-pointer hover:bg-accent group transition-all duration-300"
-            onClick={() => {
-              invalidateQuery();
-              toast.success("Data refreshed!");
-            }}
-          >
-            Refresh{" "}
-            <CloudSync className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
-          </Button>
-        </div>
-      </div>
+        </div> */}
+        <div></div>
+        {/*Remove if I want to bring back the Easy / Advanced toggle */}
+          <div className="auto-cols-fr gap-4 justify-center">
+            {dialogStuff.map((i) => (
+              <Dialog key={i.title}>
+                <DialogTrigger>
+                  <Button className="cursor-pointer hover:bg-accent group transition-all duration-300">
+                    {i.title}{" "}
+                    <i.icon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{i.title}</DialogTitle>
+                    <DialogDescription>{i.description}</DialogDescription>
+                  </DialogHeader>
+                  {i.reactLogic}
+                </DialogContent>
+              </Dialog>
+            ))}
+            <Button
+              className="cursor-pointer hover:bg-accent group transition-all duration-300"
+              onClick={() => {
+                invalidateQuery();
+                toast.success("Data refreshed!");
+              }}
+            >
+              Refresh{" "}
+              <CloudSync className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
+            </Button>
+          </div>
+          </div>
       <Table
         columns={[
           {
@@ -536,7 +795,7 @@ export default function Page() {
                     deleteCert.mutate(row.original.id);
                   }}
                 >
-                  Delete{" "}
+                  Revoke{" "}
                   <Trash2Icon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
                 </Button>
               </div>
@@ -558,6 +817,104 @@ export default function Page() {
           </Button>
         )}
       </div>
+        </TabsContent>
+        <TabsContent value="settings" className="space-y-4">
+          <div className="max-w-3xl space-y-4 rounded-lg border p-4">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">Regen Settings</h2>
+              <p className="text-sm text-muted-foreground">
+                When configured, certificate generate and revoke actions will use
+                the remote regen service instead of the local signing proxy.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="certUrl">CERT_URL</Label>
+              <Input
+                id="certUrl"
+                value={regenSettings.certUrl}
+                placeholder="https://example.com"
+                onChange={(e) =>
+                  setRegenSettings((prev) => ({
+                    ...prev,
+                    certUrl: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="apiKey">API_KEY / TOKEN</Label>
+              <Input
+                id="apiKey"
+                type="password"
+                value={regenSettings.apiKey}
+                placeholder={
+                  hasStoredApiKey
+                    ? "Stored API key is set. Enter a new token to rotate it."
+                    : "token"
+                }
+                onChange={(e) =>
+                  setRegenSettings((prev) => ({
+                    ...prev,
+                    apiKey: e.target.value,
+                  }))
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Requests send both `Authorization` and `API_KEY` headers as
+                `BEARER TOKEN {"${TOKEN}"}`.
+              </p>
+              {hasStoredApiKey && (
+                <p className="text-xs text-muted-foreground">
+                  A token is already stored server-side. Leave this blank to keep
+                  it unchanged.
+                </p>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                className="group"
+                disabled={saveSettings.isPending}
+                onClick={() => saveSettings.mutate()}
+              >
+                Save Settings{" "}
+                <SaveIcon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
+              </Button>
+              <Button
+                variant="outline"
+                disabled={getRegenAccount.isFetching}
+                onClick={async () => {
+                  const result = await getRegenAccount.refetch();
+                  if (result.error) {
+                    toast.error(result.error.message);
+                    return;
+                  }
+                  toast.success("Account loaded");
+                }}
+              >
+                Fetch Account
+              </Button>
+            </div>
+          </div>
+          <div className="max-w-3xl space-y-2 rounded-lg border p-4">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">Account Response</h2>
+              <p className="text-sm text-muted-foreground">
+                Raw response from `${"{CERT_URL}"}/api/regen/account`.
+              </p>
+            </div>
+            <Textarea
+              readOnly
+              className="min-h-64 font-mono text-xs"
+              value={
+                getRegenAccount.data?.account
+                  ? JSON.stringify(getRegenAccount.data.account, null, 2)
+                  : ""
+              }
+              placeholder="Fetch account data to inspect the remote response."
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

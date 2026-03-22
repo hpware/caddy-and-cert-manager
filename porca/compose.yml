@@ -1,0 +1,18 @@
+services:
+  porca:
+    build: ./porca
+    image: ghcr.io/hpware/cert-porca
+    # Do NOT open ports on this program, this should be a secure layer for the critial certificates.
+    env_file:
+      - .env
+    environment:
+      PROTECTION_PROXY_TOKEN: ${PROTECTION_PROXY_TOKEN}
+      NEXT_PUBLIC_GUEST_RESOURCES_URL: ${NEXT_PUBLIC_GUEST_RESOURCES_URL}
+    volumes:
+      - ./certs:/app/certs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/ok"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

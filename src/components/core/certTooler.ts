@@ -36,70 +36,85 @@ export async function generateCertificate(
   generateDays: number,
   saveUUID: string = crypto.randomUUID(),
 ) {
-  const tempSavePath = `/tmp/${saveUUID}.cnf`;
   try {
-    const { stdout: getSAN } = await spawnWithInput(
-      "openssl",
-      ["req", "-noout", "-text", "-in", "-"],
-      csrText,
-    );
-    const sanMatch = getSAN.match(/Subject Alternative Name:.*\n\s*(.*)/);
-    const extractedSans = sanMatch ? sanMatch[1].trim() : "";
-
-    let configContent = "";
-    const cnMatch = getSAN.match(/Subject:.*?CN\s?=\s?([^\s,+/]+)/);
-    let extractedCN = cnMatch ? cnMatch[1].trim() : "";
-    extractedCN = extractedCN.replace(/[\[\]]/g, "");
-    if (extractedSans) {
-      // If the CSR already has SANs, OpenSSL usually formats them correctly
-      // (e.g., "DNS:domain.com, IP:1.2.3.4"). We can use them as is.
-      configContent = `subjectAltName = ${extractedSans}`;
-    } else {
-      if (extractedCN) {
-        // Check if extractedCN is an IP address
-        const isIP =
-          /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(extractedCN) ||
-          extractedCN.includes(":");
-
-        const prefix = isIP ? "IP" : "DNS";
-        configContent = `subjectAltName = ${prefix}:${extractedCN}`;
-      }
+    if (
+      process.env.IGNORE_PROTECTIONS?.toLowerCase() !== "true" &&
+      generateDays > 200
+    ) {
+      throw new Error(
+        "Cannot generate over 200 days. To ignore this error, set IGNORE_PROTECTIONS=true in the `.env` file.",
+      );
     }
-    if (configContent) {
-      await fs.promises.writeFile(tempSavePath, configContent);
+    const req = await fetch(`${process.env.PROTECTION_PROXY_URL}/api/sign`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        proxyToken: process.env.PROTECTION_PROXY_TOKEN,
+        csr: csrText,
+        days: generateDays,
+      }),
+    });
+    if (!req.ok) {
+      const body = await req.text();
+      throw new Error(
+        `Signing proxy returned ${req.status} ${req.statusText}: ${body}`,
+      );
     }
-    const termGenerate = await spawnWithInput(
-      "openssl",
-      [
-        "x509",
-        "-req",
-        "-in",
-        "-",
-        "-CA",
-        "./certs/master.pub.pem",
-        "-CAkey",
-        "./certs/master.key.pem",
-        "-CAcreateserial",
-        "-days",
-        generateDays.toString(),
-        "-sha256",
-        "-extfile",
-        tempSavePath,
-      ],
-      csrText,
-    );
+    const res = (await req.json()) as {
+      error: string | null;
+      pb: string;
+      itemCN: string;
+    };
+
+    if (res.error !== null) {
+      throw new Error(res.error);
+    }
     const savePath = `./certs/created/${saveUUID}_pub.pem`;
 
     await fs.promises.mkdir("./certs/created", { recursive: true });
 
-    await fs.promises.writeFile(savePath, termGenerate.stdout);
-    return { pb: savePath, itemCN: extractedCN };
+    await fs.promises.writeFile(savePath, res.pb);
+    return { pb: savePath, itemCN: res.itemCN };
   } catch (e) {
     console.error(`generateCertificate failed: ${e}`);
     throw e;
-  } finally {
-    if (fs.existsSync(tempSavePath)) await fs.unlinkSync(tempSavePath);
   }
+}
+
+export async function revokeCertificate(revokeCertPublicPem: string) {
+  let req: Response;
+  try {
+    req = await fetch(`${process.env.PROTECTION_PROXY_URL}/api/revoke`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        proxyToken: process.env.PROTECTION_PROXY_TOKEN,
+        cert: revokeCertPublicPem,
+      }),
+    });
+  } catch (e) {
+    throw new Error(
+      `Failed to reach revocation proxy: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+  if (!req.ok) {
+    const body = await req.text();
+    throw new Error(
+      `Revocation proxy returned ${req.status} ${req.statusText}: ${body}`,
+    );
+  }
+  const res = (await req.json()) as {
+    error: string | null;
+    revoked: boolean;
+  };
+  if (res.error !== null) {
+    throw new Error(res.error);
+  }
+  return;
 }
 
 export async function generateFullchain(uuid: string): Promise<string> {
