@@ -22,7 +22,16 @@ docker compose up -d
 and you are done! You now can register an account (if you have SSO, login with that!), and you have your own CA, just make sure that you and your family all trust that master certificate!
 
 ## Will your master CA private key get leaked if the next Next.js vuln happens?
-If you have properly secured your server, no it won't this system (porca) is designed to only let the Next.js application request to sign a CSR request, revoking a certificate, and get a CRL only. The attacker only can create new certificates and revoke certificates via curl, and cannot get the CA private key, you can revoke the certificates later, if your app's certificates got revoked, you should re-roll those certificates, if you have the auto-update CA script, all of this is will automaticly re-issue the certificates to those clients.
+The CA private key is held by porca, not Next.js, so a Next.js exploit cannot directly extract the key. However, **unauthorized certificate issuance is a serious security incident** — an attacker who can reach porca's signing endpoint can mint trusted certificates for any domain in your CA's scope.
+
+**If you suspect unauthorized issuance:**
+1. Audit all issued certificates: review `./certs/ca_db/index.txt` to enumerate every certificate signed by your CA.
+2. Immediately revoke any unauthorized certificates via the revoke endpoint and regenerate the CRL.
+3. If you cannot fully enumerate what was issued (e.g., logs are missing), rotate the CA: generate a new key pair, re-issue all legitimate certificates, and distribute the new root to your clients.
+4. Disable the issuance endpoint (take porca offline or block its port) until the vulnerability is patched.
+5. Notify stakeholders who trust your CA so they can take appropriate action.
+
+**Preventing future misuse:** enable logging on porca requests so every signing operation is recorded. Monitor for unexpected certificate issuance. If you use the auto-update CA rotation script, verify your CA's integrity and audit the new CA before distributing it to clients.
 
 ## Certificate Management
 > [!NOTE]

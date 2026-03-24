@@ -18,8 +18,12 @@ export default async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const hostname = req.nextUrl.hostname;
 
+  const PUBLIC_API_PATHS = ["/api/auth/"];
   if (hostname === String(process.env.NEXT_PUBLIC_GUEST_RESOURCES_HOST)) {
-    if (path.startsWith("/auth/") || path.startsWith("/api/")) {
+    if (
+      path.startsWith("/auth/") ||
+      PUBLIC_API_PATHS.some((p) => path.startsWith(p))
+    ) {
       return NextResponse.next();
     }
     const rewriteUrl = new URL(`/guest-resources${path}`, req.url);
