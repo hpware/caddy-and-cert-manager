@@ -20,6 +20,7 @@ import {
   GlobeIcon,
   KeyRoundIcon,
   Trash2Icon,
+  XIcon,
 } from "lucide-react";
 import {
   Dialog,
@@ -46,11 +47,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export default function Page() {
   const [dialogStatus, setDialogStatus] = useState<string>("easy");
   const [openTabList, setOpenTabList] = useState<string>("server");
-  const [easySync, setEasySync] = useState({
+  const [easySync, setEasySync] = useState<{
+    city: string;
+    country: string;
+    commonName: string;
+    organization: string;
+    organizationUnit: string;
+    locality: string;
+    revokable: boolean;
+    domains: string[];
+    domainInputBox: string;
+  }>({
     city: "",
     country: "TW",
     commonName: "",
@@ -58,6 +70,8 @@ export default function Page() {
     organizationUnit: "",
     locality: "",
     revokable: true,
+    domains: [],
+    domainInputBox: "",
   });
   const getMasterCert = useQuery({
     queryFn: async () => {
@@ -97,6 +111,21 @@ export default function Page() {
       );
     },
   });
+  const submitIPAddressToAddToArray = () => {
+    if (easySync.domainInputBox.length === 0) {
+      toast.error("Cannot submit empty string!");
+      return;
+    }
+    if (easySync.domains.find((d) => d === easySync.domainInputBox)) {
+      toast.error("This IP address or domain have already been added!");
+      return;
+    }
+    setEasySync((prev) => ({
+      ...prev,
+      domainInputBox: "",
+      domains: [...prev.domains, prev.domainInputBox],
+    }));
+  };
   const dialogStuff = [
     {
       icon: BadgePlusIcon,
@@ -107,6 +136,10 @@ export default function Page() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (dialogStatus === "easy" && easySync.domains.length === 0) {
+              toast.error("Please add at least one domain or IP address.");
+              return;
+            }
             const formData = new FormData(e.currentTarget);
             handleSubmitCreate.mutate(formData);
           }}
@@ -130,21 +163,86 @@ export default function Page() {
             type="number"
             id="Days"
             name="Days"
-            defaultValue="365"
+            defaultValue="200"
             required
           />
           {dialogStatus === "easy" ? (
             <>
-              <Label htmlFor="CN">Your Domain or IP Addresses:</Label>
-              <Input
+              <input
                 type=""
                 id="CN"
                 name="CN"
-                required
-                value={easySync.commonName}
-                onChange={(e) => {
-                  setEasySync({ ...easySync, commonName: e.target.value });
-                }}
+                hidden
+                value={easySync.domains[0] ?? ""}
+              />
+              <Label htmlFor="subjectAltNameInputBox">
+                Your Domains or IP Addresses:
+              </Label>
+              <div className="flex flex-row space-x-1">
+                <Input
+                  type=""
+                  id="subjectAltNameInputBox"
+                  name="subjectAltNameInputBox"
+                  value={easySync.domainInputBox}
+                  onChange={(e) => {
+                    setEasySync({
+                      ...easySync,
+                      domainInputBox: e.target.value,
+                    });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      submitIPAddressToAddToArray();
+                    }
+                    if (e.key === " ") e.preventDefault();
+                    if (e.key === "~") e.preventDefault();
+                    if (e.key === "_") e.preventDefault();
+                    if (e.key === "@") e.preventDefault();
+                    if (e.key === "!") e.preventDefault();
+                    if (e.key === "$") e.preventDefault();
+
+                    if (e.key === "%") e.preventDefault();
+                    if (e.key === "(") e.preventDefault();
+                    if (e.key === ")") e.preventDefault();
+                    if (e.key === "+") e.preventDefault();
+                    if (e.key === "=") e.preventDefault();
+                  }}
+                />
+                <Button type="button" onClick={submitIPAddressToAddToArray}>
+                  +
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 overflow-x-scroll max-h-20">
+                {easySync.domains.map((i) => (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEasySync((prev) => ({
+                        ...prev,
+                        domains: prev.domains.filter((d) => d !== i),
+                      }));
+                    }}
+                    className="group flex"
+                  >
+                    <Badge
+                      key={i}
+                      className="flex items-center gap-1 pl-3 pr-1 group-hover:bg-red-500 cursor-pointer group-hover:text-white/80 transition-all duration-100"
+                      //variant="destructive"
+                    >
+                      <span className="group-hover:line-through">{i}</span>
+
+                      <XIcon className="w-4 h-4 hover:stroke-red-500 transition-all duration-100 cursor-pointer" />
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+              <input
+                type=""
+                id="subjectAltNameData"
+                name="subjectAltNameData"
+                hidden
+                value={easySync.domains.flat().toString().replaceAll(",", ", ")}
               />
 
               <Label htmlFor="O">Your Organization:</Label>
@@ -155,6 +253,9 @@ export default function Page() {
                 value={easySync.organization}
                 onChange={(e) => {
                   setEasySync({ ...easySync, organization: e.target.value });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
                 }}
               />
               <Input
@@ -174,6 +275,9 @@ export default function Page() {
                 value={easySync.city}
                 onChange={(e) => {
                   setEasySync({ ...easySync, city: e.target.value });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
                 }}
               />
               <Input
@@ -199,6 +303,9 @@ export default function Page() {
                     });
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
               />
               <input
                 type="checkbox"
@@ -223,6 +330,78 @@ export default function Page() {
                     commonName: e.target.value,
                   });
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
+              />
+              <Label htmlFor="subjectAltNameInputBox">
+                Subject Alt Names:{" "}
+              </Label>
+              <div className="flex flex-row space-x-1">
+                <Input
+                  type=""
+                  id="subjectAltNameInputBox"
+                  name="subjectAltNameInputBox"
+                  value={easySync.domainInputBox}
+                  onChange={(e) => {
+                    setEasySync({
+                      ...easySync,
+                      domainInputBox: e.target.value,
+                    });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      submitIPAddressToAddToArray();
+                    }
+                    if (e.key === " ") e.preventDefault();
+                    if (e.key === "~") e.preventDefault();
+                    if (e.key === "_") e.preventDefault();
+                    if (e.key === "@") e.preventDefault();
+                    if (e.key === "!") e.preventDefault();
+                    if (e.key === "$") e.preventDefault();
+                    if (e.key === "%") e.preventDefault();
+                    if (e.key === "(") e.preventDefault();
+                    if (e.key === ")") e.preventDefault();
+                    if (e.key === "+") e.preventDefault();
+                    if (e.key === "=") e.preventDefault();
+                  }}
+                />
+                <Button type="button" onClick={submitIPAddressToAddToArray}>
+                  +
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap gap-2 overflow-x-scroll max-h-20">
+                {easySync.domains.map((i) => (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEasySync((prev) => ({
+                        ...prev,
+                        domains: prev.domains.filter((d) => d !== i),
+                      }));
+                    }}
+                    className="group flex"
+                  >
+                    <Badge
+                      key={i}
+                      className="flex items-center gap-1 pl-3 pr-1 group-hover:bg-red-500 cursor-pointer group-hover:text-white/80 transition-all duration-100"
+                      //variant="destructive"
+                    >
+                      <span className="group-hover:line-through">{i}</span>
+
+                      <XIcon className="w-4 h-4 hover:stroke-red-500 transition-all duration-100 cursor-pointer" />
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+              <input
+                type=""
+                id="subjectAltNameData"
+                name="subjectAltNameData"
+                hidden
+                value={easySync.domains.flat().toString().replaceAll(",", ", ")}
               />
 
               <Label htmlFor="O">O (Organization Name):</Label>
@@ -233,6 +412,9 @@ export default function Page() {
                 value={easySync.organization}
                 onChange={(e) => {
                   setEasySync({ ...easySync, organization: e.target.value });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
                 }}
               />
 
@@ -248,6 +430,9 @@ export default function Page() {
                     organizationUnit: e.target.value,
                   });
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
               />
 
               <Label htmlFor="L">L (Locality):</Label>
@@ -259,6 +444,9 @@ export default function Page() {
                 onChange={(e) => {
                   setEasySync({ ...easySync, locality: e.target.value });
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
               />
 
               <Label htmlFor="ST">ST (State):</Label>
@@ -269,6 +457,9 @@ export default function Page() {
                 value={easySync.city} // STOP!!! FUCK STOP CHANGING IT TO STATE
                 onChange={(e) => {
                   setEasySync({ ...easySync, city: e.target.value }); // don't fucking change it to state Zed autocompelete!!!!
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
                 }}
               />
 
@@ -286,6 +477,9 @@ export default function Page() {
                     });
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
               />
 
               <div className="flex items-center space-x-3">
@@ -297,7 +491,10 @@ export default function Page() {
                   defaultChecked={true}
                   value={easySync.revokable ? 1 : 0}
                   onChange={(e) =>
-                    setEasySync({ ...easySync, revokable: e.target.checked })
+                    setEasySync({
+                      ...easySync,
+                      revokable: e.target.checked,
+                    })
                   }
                 />
               </div>
@@ -441,7 +638,7 @@ export default function Page() {
     <div className="m-3">
       <h1 className="text-2xl font-bold">Certificate Manager</h1>
       <div className="flex flex-col md:flex-row justify-between pb-2">
-        <div>
+        {/*<div>
           <Select>
             <SelectTrigger>
               <SelectValue placeholder="Easy" />
@@ -451,7 +648,9 @@ export default function Page() {
               <SelectItem value="advanced">Advanced</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
+        <div></div>
+        {/*Remove if I want to bring back the Easy / Advanced toggle */}
         <div className="auto-cols-fr gap-4 justify-center">
           {dialogStuff.map((i) => (
             <Dialog key={i.title}>
@@ -536,7 +735,7 @@ export default function Page() {
                     deleteCert.mutate(row.original.id);
                   }}
                 >
-                  Delete{" "}
+                  Revoke{" "}
                   <Trash2Icon className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
                 </Button>
               </div>

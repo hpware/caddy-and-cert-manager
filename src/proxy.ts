@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { auth } from "./components/auth";
 
 export const config = {
@@ -11,21 +10,36 @@ export const config = {
      * 3. /_static (if you use it)
      * 4. metadata files (favicon.ico, sitemap.xml, etc.)
      */
-    "/((?!api/|_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|favicon.ico).*)",
   ],
 };
 
 export default async function proxy(req: NextRequest) {
-  const url = req.nextUrl;
   const path = req.nextUrl.pathname;
+  const hostname = req.nextUrl.hostname;
+
+  const PUBLIC_API_PATHS = ["/api/auth/"];
+  if (hostname === String(process.env.NEXT_PUBLIC_GUEST_RESOURCES_HOST)) {
+    if (
+      path.startsWith("/auth/") ||
+      PUBLIC_API_PATHS.some((p) => path.startsWith(p))
+    ) {
+      return NextResponse.next();
+    }
+    const rewriteUrl = new URL(`/guest-resources${path}`, req.url);
+    rewriteUrl.search = req.nextUrl.search;
+    return NextResponse.rewrite(rewriteUrl);
+  }
   const userHeaders = req.headers;
   const checkUserLoginStatus = await auth.api.getSession({
     headers: userHeaders,
   });
-  //console.log(`[MIDDLEWARE] Url Path: ${String(path)}, Login Status: ${checkUserLoginStatus === null ? 1 : 0}`,);
+  //console.log(
+  //  `[MIDDLEWARE] URL: ${String(hostname)}, Url Path: ${String(path)}, Login Status: ${checkUserLoginStatus === null ? 1 : 0}`,
+  //);
   if (
     !String(path).startsWith("/auth/") &&
-    !String(path).startsWith("/guest-resources") &&
+    !String(path).startsWith("/api/") &&
     checkUserLoginStatus === null
   ) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
