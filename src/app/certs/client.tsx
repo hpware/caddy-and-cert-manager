@@ -137,6 +137,10 @@ export default function Page() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (dialogStatus === "easy" && easySync.domains.length === 0) {
+              toast.error("Please add at least one domain or IP address.");
+              return;
+            }
             const formData = new FormData(e.currentTarget);
             handleSubmitCreate.mutate(formData);
           }}
@@ -160,7 +164,7 @@ export default function Page() {
             type="number"
             id="Days"
             name="Days"
-            defaultValue="365"
+            defaultValue="200"
             required
           />
           {dialogStatus === "easy" ? (
@@ -169,9 +173,8 @@ export default function Page() {
                 type=""
                 id="CN"
                 name="CN"
-                required
                 hidden
-                value={easySync.domains[0]}
+                value={easySync.domains[0] ?? ""}
               />
               <Label htmlFor="subjectAltNameInputBox">
                 Your Domains or IP Addresses:

@@ -13,10 +13,13 @@ if (!guestResourcesUrl) {
   );
   process.exit(1);
 }
-console.log("Protection Proxy on :4000");
+const servePort = Number(process.env.PORT) || 4000;
+const serveHostname = process.env.HOSTNAME || "0.0.0.0";
+console.log(`Protection Proxy on ${serveHostname}:${servePort}`);
 const protectionProxyToken = process.env.PROTECTION_PROXY_TOKEN;
 Bun.serve({
-  port: 4000,
+  port: servePort,
+  hostname: serveHostname,
   routes: {
     "/api/sign": {
       POST: async (req) => {
@@ -45,8 +48,14 @@ Bun.serve({
             { status: 400 },
           );
         }
+        const MAX_DAYS = 200;
+        const parsedDays = Math.floor(Number(days));
+        const clampedDays =
+          !Number.isFinite(parsedDays) || parsedDays <= 0
+            ? MAX_DAYS
+            : Math.min(parsedDays, MAX_DAYS);
         try {
-          const result = await generateCertificate(csr, Number(days));
+          const result = await generateCertificate(csr, clampedDays);
           return Response.json({ ...result, error: null });
         } catch (e) {
           return Response.json(
