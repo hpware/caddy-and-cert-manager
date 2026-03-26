@@ -244,11 +244,19 @@ async function revokeCertificate(cert: string) {
   if (!(await Bun.file(configPath).exists())) {
     throw new Error("CA database not initialized. Run init.sh first.");
   }
-  await spawnWithInput(
-    "openssl",
-    ["ca", "-config", configPath, "-revoke", "-batch", "--"],
-    cert,
-  );
+  // openssl ca -revoke requires a file path, not stdin
+  const tmpCert = `./certs/tmp_revoke_${crypto.randomUUID()}.pem`;
+  await Bun.write(tmpCert, cert);
+  try {
+    await spawnWithInput(
+      "openssl",
+      ["ca", "-config", configPath, "-revoke", tmpCert, "-batch"],
+      "",
+    );
+  } finally {
+    const { unlink } = await import("node:fs/promises");
+    await unlink(tmpCert).catch(() => {});
+  }
   await spawnWithInput(
     "openssl",
     [

@@ -16,6 +16,7 @@ import { useMemo } from "react";
 import Table from "@/components/table";
 import {
   CalendarSearch,
+  ChartNetworkIcon,
   CloudSync,
   GlobeIcon,
   KeyRoundIcon,
@@ -688,6 +689,21 @@ export default function Page() {
               </div>
             ),
             cell: ({ row }) => <span>{row.getValue("name")}</span>,
+          },
+          {
+            accessorKey: "subjectAltNames",
+            header: () => (
+              <div className="flex items-center gap-1">
+                <ChartNetworkIcon className="w-4 h-4" /> SANs
+              </div>
+            ),
+            cell: ({ row }) => (
+              <div className="flex flex-wrap gap-2 overflow-x-scroll max-h-10 max-w-120">
+                {row.original.subjectAltNames.flatMap((i) => (
+                  <Badge>{i}</Badge>
+                ))}
+              </div>
+            ),
           },
           {
             accessorKey: "created_at",

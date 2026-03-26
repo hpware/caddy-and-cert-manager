@@ -15,8 +15,14 @@ export const DELETE = async (req: Request) => {
   const body = await req.json();
   try {
     const certPath = `./certs/created/${body.id}_pub.pem`;
-    const publicKey = await fs.promises.readFile(certPath, "utf8");
-    await revokeCertificate(publicKey);
+    try {
+      const publicKey = await fs.promises.readFile(certPath, "utf8");
+      await revokeCertificate(publicKey);
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw e;
+      }
+    }
     await db
       .delete(schema.certificates)
       .where(eq(schema.certificates.id, body.id));
