@@ -2,6 +2,7 @@ services:
   cert-manager:
     build: .
     image: ghcr.io/hpware/caddy-and-cert-manager
+    user: 1000:1000 # Your user ID, also replace porca user permissions as well!
     ports:
       - "3000:3000"
     environment:
@@ -28,6 +29,7 @@ services:
   porca:
     build: ./porca
     image: ghcr.io/hpware/cert-porca
+    user: 1000:1000 # Your user ID
     # Do NOT open ports on this program, this should be a secure layer for the critial certificates.
     volumes:
       - ./certs:/app/certs
