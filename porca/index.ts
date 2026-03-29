@@ -253,16 +253,18 @@ async function revokeCertificate(cert: string) {
   if (!(await Bun.file(configPath).exists())) {
     throw new Error("CA database not initialized. Run init.sh first.");
   }
-  const tempCertPath = `/tmp/${crypto.randomUUID()}_revoke.pem`;
+  // openssl ca -revoke requires a file path, not stdin
+  const tmpCert = `./certs/tmp_revoke_${crypto.randomUUID()}.pem`;
+  await Bun.write(tmpCert, cert);
   try {
-    await Bun.write(tempCertPath, cert);
     await spawnWithInput(
       "openssl",
-      ["ca", "-config", configPath, "-revoke", tempCertPath, "-batch"],
+      ["ca", "-config", configPath, "-revoke", tmpCert, "-batch"],
       "",
     );
   } finally {
-    if (await Bun.file(tempCertPath).exists()) await unlink(tempCertPath);
+    const { unlink } = await import("node:fs/promises");
+    await unlink(tmpCert).catch(() => {});
   }
   await spawnWithInput(
     "openssl",

@@ -20,15 +20,20 @@ export const DELETE = async (req: Request) => {
   }
   const sanitizedId: string = body.id;
   try {
-    const certPath = `./certs/created/${sanitizedId}_pub.pem`;
-    const publicKey = await fs.promises.readFile(certPath, "utf8");
-    // Delete from DB first; if revocation fails the DB entry is already gone
-    // but the cert can be retried manually. This avoids the reverse case where
-    // the cert is revoked but the DB row remains and blocks further action.
-    await db
-      .delete(schema.certificates)
-      .where(eq(schema.certificates.id, sanitizedId));
-    await revokeCertificate(publicKey);
+    const certPath = `./certs/created/${body.id}_pub.pem`;
+    try {
+      const publicKey = await fs.promises.readFile(certPath, "utf8");
+      await revokeCertificate(publicKey);
+
+      await db
+        .delete(schema.certificates)
+        .where(eq(schema.certificates.id, sanitizedId));
+      await revokeCertificate(publicKey);
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw e;
+      }
+    }
     return new Response("Certificate Deleted!");
   } catch (e) {
     const errorId = randomString();

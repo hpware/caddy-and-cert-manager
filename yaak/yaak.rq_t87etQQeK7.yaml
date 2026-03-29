@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_t87etQQeK7
+createdAt: 2026-03-28T13:59:56.381798
+updatedAt: 2026-03-28T14:00:18.524431
+workspaceId: wk_XC848QbnVv
+folderId: fl_3jzjgd8Pte
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Obtains Generated Certificate Private Key
+sortPriority: 2000.0
+url: http://localhost:3000/api/certs/get_file/00200000-0000-4000-8000-000000000000?type=private
+urlParameters: []

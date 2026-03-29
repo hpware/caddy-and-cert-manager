@@ -1,0 +1,26 @@
+type: http_request
+model: http_request
+id: rq_MJx2RNbZEX
+createdAt: 2026-03-28T14:01:06.804499
+updatedAt: 2026-03-28T14:02:22.519727
+workspaceId: wk_XC848QbnVv
+folderId: fl_3jzjgd8Pte
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "id": "00200000-0000-4000-8000-000000000000"
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: VeHtsXzAKm
+method: GET
+name: Get all certificates from DB (requires user login)
+sortPriority: 1000.001
+url: http://localhost:3000/api/certs/get_all_certs
+urlParameters: []

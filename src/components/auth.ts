@@ -4,7 +4,7 @@ import { createAuthMiddleware, APIError } from "better-auth/api";
 import { db } from "./drizzle/db"; // your drizzle instance
 import { kvData } from "@/components/drizzle/schema";
 import { eq } from "drizzle-orm";
-import { genericOAuth } from "better-auth/plugins";
+import { apiKey, genericOAuth } from "better-auth/plugins";
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_URL,
   database: drizzleAdapter(db, {
@@ -28,6 +28,7 @@ export const auth = betterAuth({
           }),
         ]
       : []),
+    apiKey(),
   ],
   hooks: {
     before: createAuthMiddleware(async (ctx) => {

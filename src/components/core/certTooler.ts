@@ -2,6 +2,7 @@ import { execAsync, spawnWithInput } from "./exec";
 import fs from "node:fs";
 export async function generateCSR(
   saveUUID: string = crypto.randomUUID(),
+  subjectAltNames: string[],
   commonName: string,
   organizationUnit: string,
   organization: string,
