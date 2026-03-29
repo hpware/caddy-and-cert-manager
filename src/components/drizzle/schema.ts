@@ -14,7 +14,8 @@ export const certificates = pgTable("certificates", {
   id: uuid("id").primaryKey().notNull(),
   name: text("name").notNull(),
   subjectAltNames: jsonb("subject_alt_names").notNull().default([]),
-  privateKey: boolean("private_key").notNull().default(false),
+  containsPrivateKey: boolean("private_key").notNull().default(false),
+  certificatePublicKey: text("certificate_public_key").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
   updated_at: timestamp("updated_at").defaultNow().notNull(),
   group: uuid("group").references(() => certificateGroup.id),
@@ -28,27 +29,6 @@ export const certificateGroup = pgTable("certificate_group", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
   createdByUser: text("created_by").references(() => user.id),
 });
-
-//export const proxy = pgTable("proxy", {
-//  id: uuid("id").primaryKey().notNull(),
-//  publicUrls: jsonb("public_urls").notNull().array().default([]),
-//  certificateOrigin: text("certificate_origin").notNull(),
-//  otherSettings: text("other_settings").notNull().default("{}"),
-//  allowWebsocket: boolean("allow_websocket").notNull().default(false),
-//  cacheAssets: boolean("cache_assets").notNull().default(false),
-//  proxyHostUrl: text("proxy_host_url").notNull(),
-//  createdAt: timestamp("created_at").defaultNow().notNull(),
-//  updated_at: timestamp("updated_at").defaultNow().notNull(),
-//});
-
-///export const sessionToks = pgTable("session_tokens", {
-///  id: integer("id").generatedAlwaysAsIdentity().primaryKey().notNull(),
-///  token: text("id").notNull(),
-///  linkedToUser: text("linked_to_user").references(() => user.id),
-///  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
-///    .defaultNow()
-///    .notNull(),
-///});
 
 export const kvData = pgTable("kv_data", {
   id: integer("id").generatedAlwaysAsIdentity().notNull().primaryKey(),

@@ -54,7 +54,7 @@ export const POST = async (request: NextRequest) => {
             SANArray.length > 0
               ? SANArray.map((i) => toUnicode(i))
               : [toUnicode(SANArray[0])],
-          privateKey: true,
+          containsPrivateKey: true,
         })
         .execute();
 
@@ -86,7 +86,7 @@ export const POST = async (request: NextRequest) => {
           id: saveUUID,
           name: generateCert.itemCN,
           subjectAltNames: [generateCert.itemCN],
-          privateKey: false,
+          containsPrivateKey: false,
         })
         .execute();
       const fullChainPath = await certTool.generateFullchain(saveUUID);

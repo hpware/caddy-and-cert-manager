@@ -30,18 +30,14 @@ export const GET = async (
       return new Response("Invalid type", { status: 400 });
     }
 
-    let getText: string;
+    const getText = db.select().from();
 
-    getText = await fs.promises.readFile(
-      `./certs/created/${slug}_${
-        type === "public"
-          ? "pub"
-          : type === "private"
-            ? "private_key"
-            : "fullchain"
-      }.pem`,
-      "utf8",
-    );
+    /* type === "public"
+      ? "pub"
+      : type === "private"
+        ? "private_key"
+        : "fullchain"
+  } */
 
     return new Response(getText, {
       headers: {

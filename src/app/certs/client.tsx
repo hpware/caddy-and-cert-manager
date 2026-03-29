@@ -722,15 +722,15 @@ export default function Page() {
             ),
           },
           {
-            accessorKey: "privateKey",
+            accessorKey: "containsPrivateKey",
             header: () => (
               <div className="flex items-center gap-2">
                 <KeyRoundIcon className="w-4 h-4" /> is CSR?
               </div>
             ),
             cell: ({ row }) => (
-              <span className={row.getValue("privateKey") ? "text-bold" : ""}>
-                {row.getValue("privateKey") ? "No" : "Yes"}
+              <span className={row.getValue("containsPrivateKey") ? "text-bold" : ""}>
+                {row.getValue("containsPrivateKey") ? "No" : "Yes"}
               </span>
             ),
           },
