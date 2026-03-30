@@ -1,0 +1,1 @@
+ALTER TABLE "certificates" ADD COLUMN "certificate_public_key" text NOT NULL;

@@ -9,7 +9,13 @@ import { toast } from "sonner";
 const services = [
   {
     name: "Certificate",
-    href: "/certs",
+    href: "/",
+    icon: BadgeCheck,
+    defaultHTML: false,
+  },
+  {
+    name: "Settings",
+    href: "/settings",
     icon: BadgeCheck,
     defaultHTML: false,
   },
