@@ -6,6 +6,7 @@ import { auth } from "@/components/auth";
 import { headers } from "next/headers";
 import { db } from "@/components/drizzle/db";
 import { eq } from "drizzle-orm";
+import { certificates } from "@/components/drizzle/schema";
 
 export const GET = async (
   request: NextRequest,
@@ -30,7 +31,13 @@ export const GET = async (
       return new Response("Invalid type", { status: 400 });
     }
 
-    const getText = db.select().from();
+    const getText = await db
+      .select()
+      .from(certificates)
+      .where(eq(certificates.id, slug));
+    if (getText.length === 0) {
+      return new Response("Invalid slug", { status: 400 });
+    }
 
     /* type === "public"
       ? "pub"
@@ -39,17 +46,26 @@ export const GET = async (
         : "fullchain"
   } */
 
-    return new Response(getText, {
-      headers: {
-        "Content-Type":
-          get === "download" ? "application/octet-stream" : "text/plain",
-        ...(get === "download" && {
-          "Content-Disposition": `attachment; filename=${slug}_${
-            type === "public_fullchain" ? "fullchain" : type
-          }.pem`,
-        }),
+    return new Response(
+      String(
+        type === "public"
+          ? getText[0].certificatePublicKey
+          : type === "private"
+            ? getText[0].containsPrivateKey
+            : "",
+      ),
+      {
+        headers: {
+          "Content-Type":
+            get === "download" ? "application/octet-stream" : "text/plain",
+          ...(get === "download" && {
+            "Content-Disposition": `attachment; filename=${slug}_${
+              type === "public_fullchain" ? "fullchain" : type
+            }.pem`,
+          }),
+        },
       },
-    });
+    );
   } catch (e) {
     const errorId = randomString();
     console.error(`[ERRID: ${errorId}] ${e}`);

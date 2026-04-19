@@ -5,6 +5,7 @@ import * as schema from "@/components/drizzle/schema";
 import checkUserLoginStatus from "@/components/checkUserLoginStatusAPI";
 import randomString from "@/components/randomString";
 import { toASCII, toUnicode } from "punycode";
+import fs from "node:fs";
 
 export const POST = async (request: NextRequest) => {
   try {
@@ -35,8 +36,8 @@ export const POST = async (request: NextRequest) => {
         .map((i) => toASCII(i));
       const certCsrAndPrivateKey = await certTool.generateCSR(
         saveUUID,
-        SANArray, // ARRAY
-        SANArray[0], // CN
+        SANArray,
+        SANArray[0],
         OU ? OU.toString() : "CertManager",
         O ? O.toString() : "CertManager",
         L ? L.toString() : "Da-an District",
@@ -44,25 +45,25 @@ export const POST = async (request: NextRequest) => {
         C ? C.toString() : "TW",
       );
 
-      // save into db
-      await db
-        .insert(schema.certificates)
-        .values({
-          id: saveUUID,
-          name: toUnicode(SANArray[0]),
-          subjectAltNames:
-            SANArray.length > 0
-              ? SANArray.map((i) => toUnicode(i))
-              : [toUnicode(SANArray[0])],
-          containsPrivateKey: true,
-        })
-        .execute();
-
       const cert = await certTool.generateCertificate(
         certCsrAndPrivateKey.csr,
         Number(Days),
         saveUUID,
       );
+
+      const certPublicKey = await fs.promises.readFile(cert.pb, "utf-8");
+
+      await db.insert(schema.certificates).values({
+        id: saveUUID,
+        name: toUnicode(SANArray[0]),
+        subjectAltNames:
+          SANArray.length > 0
+            ? SANArray.map((i) => toUnicode(i))
+            : [toUnicode(SANArray[0])],
+        containsPrivateKey: true,
+        certificatePublicKey: certPublicKey,
+      });
+
       const fullChainPath = await certTool.generateFullchain(saveUUID);
       return Response.json({
         ok: true,
@@ -79,16 +80,17 @@ export const POST = async (request: NextRequest) => {
         Number(Days),
         saveUUID,
       );
-      // save into db
-      await db
-        .insert(schema.certificates)
-        .values({
-          id: saveUUID,
-          name: generateCert.itemCN,
-          subjectAltNames: [generateCert.itemCN],
-          containsPrivateKey: false,
-        })
-        .execute();
+
+      const certPublicKey = await fs.promises.readFile(generateCert.pb, "utf-8");
+
+      await db.insert(schema.certificates).values({
+        id: saveUUID,
+        name: generateCert.itemCN,
+        subjectAltNames: [generateCert.itemCN],
+        containsPrivateKey: false,
+        certificatePublicKey: certPublicKey,
+      });
+
       const fullChainPath = await certTool.generateFullchain(saveUUID);
       return Response.json({
         ok: true,

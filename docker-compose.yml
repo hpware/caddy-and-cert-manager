@@ -26,6 +26,7 @@ services:
     volumes:
       - ./certs/master.pub.pem:/app/certs/master.pub.pem:ro
       - ./certs/master.crl.pem:/app/certs/master.crl.pem:ro
+      - ./certs/created:/app/certs/created:ro
   porca:
     build: ./porca
     image: ghcr.io/hpware/cert-porca
