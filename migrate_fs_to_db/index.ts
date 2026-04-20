@@ -27,14 +27,17 @@ async function checkMigrationStatus(): Promise<boolean> {
 }
 
 async function markMigrationComplete(): Promise<void> {
+  const val = JSON.stringify(true);
   await sql`
     INSERT INTO kv_data (key, value)
-    VALUES (${MIGRATION_KEY}, ${true})
-    ON CONFLICT (key) DO UPDATE SET value = ${true}
+    VALUES (${MIGRATION_KEY}, ${val}::jsonb)
+    ON CONFLICT (key) DO UPDATE SET value = ${val}::jsonb
   `;
 }
 
-async function getExistingCertificates(): Promise<Map<string, { id: string; name: string }>> {
+async function getExistingCertificates(): Promise<
+  Map<string, { id: string; name: string }>
+> {
   const result = await sql`
     SELECT id, name FROM certificates
   `;
@@ -48,7 +51,10 @@ async function getExistingCertificates(): Promise<Map<string, { id: string; name
 async function readCertificatesFromFS(): Promise<
   Map<string, { publicKey: string; privateKey: string | null }>
 > {
-  const certs = new Map<string, { publicKey: string; privateKey: string | null }>();
+  const certs = new Map<
+    string,
+    { publicKey: string; privateKey: string | null }
+  >();
 
   try {
     const dirEntries = await fs.readdir(CERTS_DIR, { withFileTypes: true });
@@ -76,7 +82,9 @@ async function readCertificatesFromFS(): Promise<
     }
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code === "ENOENT") {
-      console.log(`Certificates directory ${CERTS_DIR} does not exist, nothing to migrate.`);
+      console.log(
+        `Certificates directory ${CERTS_DIR} does not exist, nothing to migrate.`,
+      );
       return certs;
     }
     throw e;
@@ -92,8 +100,9 @@ async function updateCertificateInDB(
 ): Promise<void> {
   await sql`
     UPDATE certificates
-    SET 
+    SET
       certificate_public_key = ${publicKey},
+      certificate_private_key = ${privateKey ?? ""},
       private_key = ${privateKey !== null},
       updated_at = NOW()
     WHERE id = ${uuid}
@@ -132,7 +141,11 @@ async function Run() {
     }
 
     try {
-      await updateCertificateInDB(uuid, certData.publicKey, certData.privateKey);
+      await updateCertificateInDB(
+        uuid,
+        certData.publicKey,
+        certData.privateKey,
+      );
       migrated++;
       console.log(`Migrated certificate: ${uuid}`);
     } catch (e) {

@@ -45,14 +45,13 @@ export const GET = async (
         ? "private_key"
         : "fullchain"
   } */
-
     return new Response(
       String(
         type === "public"
           ? getText[0].certificatePublicKey
           : type === "private"
-            ? getText[0].containsPrivateKey
-            : "",
+            ? getText[0].certificatePrivateKey
+            : certTool.generateFullchainCertificate,
       ),
       {
         headers: {
