@@ -107,6 +107,7 @@ Bun.serve({
       },
     },
     "/ok": new Response("ok"),
+    "/api/version": new Response("1.0.0"),
   },
 });
 

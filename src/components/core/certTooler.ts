@@ -1,5 +1,7 @@
-import { execAsync, spawnWithInput } from "./exec";
+import { execAsync } from "./exec";
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 export async function generateCSR(
   saveUUID: string = crypto.randomUUID(),
   subjectAltNames: string[],
@@ -10,25 +12,23 @@ export async function generateCSR(
   state: string,
   country: string,
 ) {
+  const tmpKeyPath = path.join(os.tmpdir(), `${saveUUID}_key.pem`);
   try {
     const { stdout: getPrivateKey } = await execAsync(`openssl genrsa 2048`);
-    const privateKeySavePath = `./certs/created/${saveUUID}_private_key.pem`;
-
-    await fs.promises.mkdir("./certs/created", { recursive: true });
-
-    await fs.promises.writeFile(privateKeySavePath, getPrivateKey);
     const subj = `/CN=${commonName}/OU=${organizationUnit}/O=${organization}/L=${locality}/ST=${state}/C=${country}`;
 
-    // Using '-' tells OpenSSL to read the key from stdin
-    const csr = await spawnWithInput(
-      "openssl",
-      ["req", "-new", "-key", privateKeySavePath, "-subj", subj],
-      privateKeySavePath,
+    await fs.promises.writeFile(tmpKeyPath, getPrivateKey);
+
+    const { stdout: csr } = await execAsync(
+      `openssl req -new -subj "${subj}" -key "${tmpKeyPath}"`,
     );
-    return { csr: csr.stdout, privateKey: privateKeySavePath };
+
+    return { csr, privateKey: getPrivateKey };
   } catch (e) {
     console.error(`generateCSR failed: ${e}`);
     throw e;
+  } finally {
+    await fs.promises.unlink(tmpKeyPath).catch(() => {});
   }
 }
 
@@ -66,12 +66,7 @@ export async function generateCertificate(
     if (res.error !== null) {
       throw new Error(res.error);
     }
-    const savePath = `./certs/created/${saveUUID}_pub.pem`;
-
-    await fs.promises.mkdir("./certs/created", { recursive: true });
-
-    await fs.promises.writeFile(savePath, res.pb);
-    return { pb: savePath, itemCN: res.itemCN };
+    return { itemCN: res.itemCN, pb: res.pb };
   } catch (e) {
     console.error(`generateCertificate failed: ${e}`);
     throw e;

@@ -729,7 +729,11 @@ export default function Page() {
               </div>
             ),
             cell: ({ row }) => (
-              <span className={row.getValue("containsPrivateKey") ? "text-bold" : ""}>
+              <span
+                className={
+                  row.getValue("containsPrivateKey") ? "text-bold" : ""
+                }
+              >
                 {row.getValue("containsPrivateKey") ? "No" : "Yes"}
               </span>
             ),

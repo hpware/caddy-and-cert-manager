@@ -19,6 +19,7 @@ async function checkMigrationStatus(): Promise<boolean> {
     if (result.length > 0 && result[0].value === true) {
       return true;
     }
+
     return false;
   } catch (e) {
     console.log("Migration status check failed, assuming not migrated:", e);

@@ -51,7 +51,9 @@ export const GET = async (
           ? getText[0].certificatePublicKey
           : type === "private"
             ? getText[0].certificatePrivateKey
-            : certTool.generateFullchainCertificate,
+            : await certTool.generateFullchainCertificate(
+                getText[0].certificatePublicKey,
+              ),
       ),
       {
         headers: {

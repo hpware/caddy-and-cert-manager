@@ -20,20 +20,17 @@ export const DELETE = async (req: Request) => {
   }
   const sanitizedId: string = body.id;
   try {
-    const certPath = `./certs/created/${body.id}_pub.pem`;
-    try {
-      const publicKey = await fs.promises.readFile(certPath, "utf8");
-      await revokeCertificate(publicKey);
+    const dbData = await db
+      .select()
+      .from(schema.certificates)
+      .where(eq(schema.certificates.id, sanitizedId));
+    if (dbData.length === 0) throw new Error("Certificate not found");
+    await revokeCertificate(dbData[0].certificatePublicKey);
 
-      await db
-        .delete(schema.certificates)
-        .where(eq(schema.certificates.id, sanitizedId));
-      await revokeCertificate(publicKey);
-    } catch (e) {
-      if ((e as NodeJS.ErrnoException).code !== "ENOENT") {
-        throw e;
-      }
-    }
+    await db
+      .delete(schema.certificates)
+      .where(eq(schema.certificates.id, sanitizedId));
+
     return new Response("Certificate Deleted!");
   } catch (e) {
     const errorId = randomString();
