@@ -101,11 +101,11 @@ export const POST = async (request: NextRequest) => {
       const saveUUID = crypto.randomUUID();
       const certCsrAndPrivateKey = await certTool.generateCSR(
         saveUUID,
-        CN.toString(),
         subjectAltNameData
           .toString()
           .split(",")
           .map((i) => toUnicode(i)),
+        CN.toString(),
         OU ? OU.toString() : "CertManager",
         O ? O.toString() : "CertManager",
         L ? L.toString() : "Da-an District",
