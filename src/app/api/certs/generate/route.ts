@@ -105,7 +105,7 @@ export const POST = async (request: NextRequest) => {
         subjectAltNameData
           .toString()
           .split(",")
-          .map((i) => toASCII(i)),
+          .map((i) => toUnicode(i)),
         OU ? OU.toString() : "CertManager",
         O ? O.toString() : "CertManager",
         L ? L.toString() : "Da-an District",

@@ -1,7 +1,6 @@
 import { auth } from "@/components/auth";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
-import { config } from "@/sys_config";
 
 export const GET = async (request: NextRequest) => {
   let status = 500;
@@ -10,6 +9,9 @@ export const GET = async (request: NextRequest) => {
     const yourSession = await auth.api.getSession({ headers: Headers });
     if (!yourSession) {
       status = 401;
+      throw new Error("Unauthorized");
+    }
+    if (yourSession.user.role !== "admin") {
       throw new Error("Unauthorized");
     }
     const fetchPorcaVersion = await fetch(

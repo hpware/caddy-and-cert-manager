@@ -138,6 +138,7 @@ export async function generateCertificate(
   saveUUID: string = crypto.randomUUID(),
 ) {
   const tempSavePath = `/tmp/${saveUUID}.cnf`;
+
   try {
     const { stdout: getSAN } = await spawnWithInput(
       "openssl",
@@ -179,7 +180,7 @@ export async function generateCertificate(
       const prefix = isIP ? "IP" : "DNS";
       altNames.push(`${prefix}:${extractedCN}`);
     }
-
+    console.log(altNames);
     // Build OpenSSL extfile config
     const lines: string[] = [
       "[ v3_server ]",

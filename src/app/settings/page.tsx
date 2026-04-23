@@ -24,6 +24,7 @@ export default async function Page() {
     <Client
       providerId={readDbUserInfo[0].providerId}
       userEmail={userSession.user.email}
+      isAdmin={userSession.user.role === "admin"}
     />
   );
 }
