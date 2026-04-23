@@ -3,7 +3,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 export async function generateCSR(
-  saveUUID: string = crypto.randomUUID(),
   subjectAltNames: string[],
   commonName: string,
   organizationUnit: string,
@@ -12,8 +11,10 @@ export async function generateCSR(
   state: string,
   country: string,
 ) {
-  const tmpKeyPath = path.join(os.tmpdir(), `${saveUUID}_key.pem`);
-  const configTempPath = path.join(os.tmpdir(), `${saveUUID}_openssl.cnf`);
+  const taskUUID = crypto.randomUUID();
+  console.log(`Task UUID: ${crypto.randomUUID()}`);
+  const tmpKeyPath = path.join(os.tmpdir(), `${taskUUID}_key.pem`);
+  const configTempPath = path.join(os.tmpdir(), `${taskUUID}_openssl.cnf`);
   try {
     const { stdout: getPrivateKey } = await execAsync(`openssl genrsa 2048`);
 
@@ -148,6 +149,7 @@ export async function generateCertificate(
       headers: {
         "Content-Type": "application/json",
       },
+      signal: AbortSignal.timeout(5000),
       body: JSON.stringify({
         proxyToken: process.env.PROTECTION_PROXY_TOKEN,
         csr: csrText,
@@ -180,6 +182,7 @@ export async function revokeCertificate(revokeCertPublicPem: string) {
       proxyToken: process.env.PROTECTION_PROXY_TOKEN,
       cert: revokeCertPublicPem,
     }),
+    signal: AbortSignal.timeout(5000),
   });
   const res = (await req.json()) as {
     error: string | null;

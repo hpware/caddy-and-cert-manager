@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { KeyRound } from "lucide-react";
-import { type User } from "better-auth";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function Page({
   providerId,
@@ -34,7 +34,7 @@ export default function Page({
       <div>
         {providerId === "credential" ? (
           <Dialog>
-            <DialogTrigger>
+            <DialogTrigger asChild>
               <Button className="cursor-pointer hover:bg-accent group transition-all duration-300">
                 Change Password{" "}
                 <KeyRound className="group-hover:scale-110 group-hover:-rotate-10 transition-all duration-300" />
@@ -46,7 +46,13 @@ export default function Page({
                 Change your password
               </DialogTitle>
               <div className="flex flex-col">
-                <form className="space-x-3 space-y-2">
+                <form
+                  className="space-x-3 space-y-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    toast.error("This feature is not avaliable yet!");
+                  }}
+                >
                   <div>
                     <label>Current Password</label>
                     <Input type="password" />
@@ -75,10 +81,6 @@ export default function Page({
   );
 }
 
-{
-  /**Add is admin checks */
-}
-
 function AdminTextComponent() {
   const fetchSystemInfo = useQuery({
     queryKey: ["systemInfo"],
@@ -101,7 +103,7 @@ function AdminTextComponent() {
     <span>
       Server running with Next.js version{" "}
       {fetchSystemInfo.data.data.nextjsVersion} and CertManager{" "}
-      {fetchSystemInfo.data.data.ccmVerion}
+      {fetchSystemInfo.data.data.ccmVersion}
     </span>
   );
 }

@@ -35,7 +35,6 @@ export const POST = async (request: NextRequest) => {
         .split(",")
         .map((i) => toASCII(i));
       const certCsrAndPrivateKey = await certTool.generateCSR(
-        saveUUID,
         SANArray,
         SANArray[0],
         OU ? OU.toString() : "CertManager",
@@ -100,7 +99,6 @@ export const POST = async (request: NextRequest) => {
       }
       const saveUUID = crypto.randomUUID();
       const certCsrAndPrivateKey = await certTool.generateCSR(
-        saveUUID,
         subjectAltNameData
           .toString()
           .split(",")

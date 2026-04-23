@@ -7,24 +7,30 @@ import { eq } from "drizzle-orm";
 import fs from "node:fs";
 
 export const DELETE = async (req: Request) => {
-  // add auth
-  const user = await checkUserLoginStatus(req.headers);
-  if (!user.loggedIn) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-  const body = await req.json();
-  const uuidV4Re =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  if (!body.id || !uuidV4Re.test(body.id)) {
-    return new Response("Invalid certificate id", { status: 400 });
-  }
-  const sanitizedId: string = body.id;
+  let statusCode = 500;
   try {
+    // add auth
+    const user = await checkUserLoginStatus(req.headers);
+    if (!user.loggedIn) {
+      statusCode = 401;
+      throw new Error("Unauthorized");
+    }
+    const body = await req.json();
+    const uuidV4Re =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!body.id || !uuidV4Re.test(body.id)) {
+      statusCode = 400;
+      throw new Error("Invalid or missing certificate ID");
+    }
+    const sanitizedId: string = body.id;
     const dbData = await db
       .select()
       .from(schema.certificates)
       .where(eq(schema.certificates.id, sanitizedId));
-    if (dbData.length === 0) throw new Error("Certificate not found");
+    if (dbData.length === 0) {
+      statusCode = 404;
+      throw new Error("Certificate not found");
+    }
     await revokeCertificate(dbData[0].certificatePublicKey);
 
     await db
@@ -37,7 +43,7 @@ export const DELETE = async (req: Request) => {
     console.error(`[ERRID: ${errorId}] ${e}`);
     return new Response(
       `Internal Server Error, please view server logs for more info. ERRID: ${errorId}`,
-      { status: 500 },
+      { status: statusCode },
     );
   }
 };

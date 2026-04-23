@@ -23,7 +23,7 @@ export const GET = async (request: NextRequest) => {
         data: {
           porcaVersion,
           nextjsVersion: process.env.NEXT_VERSION,
-          ccmVerion: process.env.CCM_VERSION,
+          ccmVersion: process.env.CCM_VERSION,
         },
         error: null,
       },
