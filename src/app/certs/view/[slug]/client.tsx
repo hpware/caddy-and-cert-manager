@@ -1,6 +1,6 @@
 "use client";
 
-import { certificates } from "@/components/drizzle/schema";
+import * as schema from "@/components/drizzle/schema";
 import randomString from "@/components/randomString";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -9,13 +9,13 @@ import { useEffect, useState } from "react";
 export default function Client({
   dbData,
 }: {
-  dbData: typeof certificates.$inferSelect;
+  dbData: typeof schema.certificates.$inferSelect;
 }) {
   //const [generateAuthToken, setgenerateAuthToken] = useState("");
   return (
     <div className="flex flex-col items-center text-center justify-center absolute inset-0">
       <h1 className="text-2xl">Download Certificate</h1>
-      {dbData.privateKey && (
+      {dbData.containsPrivateKey && (
         <div>
           <h2>Private Key</h2>
           <div className="flex flex-row gap-2">

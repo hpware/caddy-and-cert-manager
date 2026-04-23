@@ -1,6 +1,12 @@
 "use client";
 import Link from "next/link";
-import { BadgeCheck, BracketsIcon, LogOutIcon, Waypoints } from "lucide-react";
+import {
+  BadgeCheck,
+  BracketsIcon,
+  CogIcon,
+  LogOutIcon,
+  Waypoints,
+} from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { authClient } from "@/components/auth-client";
@@ -9,8 +15,14 @@ import { toast } from "sonner";
 const services = [
   {
     name: "Certificate",
-    href: "/certs",
+    href: "/",
     icon: BadgeCheck,
+    defaultHTML: false,
+  },
+  {
+    name: "Settings",
+    href: "/settings",
+    icon: CogIcon,
     defaultHTML: false,
   },
   {
@@ -41,6 +53,7 @@ export default function NavBar() {
     }
   }
   const [isGuestHost, setIsGuestHost] = useState(false);
+  const [isOpened, setIsOpened] = useState(false);
   useEffect(() => {
     if (guestHostname && window.location.hostname === guestHostname) {
       setIsGuestHost(true);
@@ -55,8 +68,7 @@ export default function NavBar() {
   ) {
     return (
       <>
-        <div className="absolute inset-x-0 flex flex-row justify-between text-center z-30 rounded-lg border bg-accent/5 p-2 mx-2 my-1">
-          <div></div>
+        <div className="absolute inset-x-0 flex flex-row justify-center text-center z-30 rounded-lg border bg-accent/5 p-2 mx-2 my-1">
           <div className="flex flex-row justify-center space-x-3">
             {services.map((service) => {
               if (service.defaultHTML === true) {
@@ -66,8 +78,8 @@ export default function NavBar() {
                     href={service.href}
                     className="relative flex flex-row items-center justify-center group transition-all duration-300 space-x-2"
                   >
-                    <service.icon className="w-4 h-4 text-primary group-hover:text-accent group-hover:-rotate-10 group-hover:scale-110 transition-all duration-300" />
-                    <span className="text-xl font-bold whitespace-nowrap">
+                    <service.icon className="w-5 h-5 text-primary group-hover:text-accent group-hover:-rotate-10 group-hover:scale-110 transition-all duration-300" />
+                    <span className="text-xl font-bold whitespace-nowrap hidden md:block">
                       {service.name}
                     </span>
                   </a>
@@ -79,8 +91,8 @@ export default function NavBar() {
                     href={service.href}
                     className="relative flex flex-row items-center justify-center group transition-all duration-300 space-x-2"
                   >
-                    <service.icon className="w-4 h-4 text-primary group-hover:text-accent group-hover:-rotate-10 group-hover:scale-110 transition-all duration-300" />
-                    <span className="text-xl font-bold whitespace-nowrap">
+                    <service.icon className="w-5 h-5 text-primary group-hover:text-accent group-hover:-rotate-10 group-hover:scale-110 transition-all duration-300" />
+                    <span className="text-xl font-bold whitespace-nowrap hidden md:block">
                       {service.name}
                     </span>
                   </Link>

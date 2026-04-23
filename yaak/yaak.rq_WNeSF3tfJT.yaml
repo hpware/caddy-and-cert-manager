@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_WNeSF3tfJT
+createdAt: 2026-03-28T13:54:05.031533
+updatedAt: 2026-03-28T14:00:18.518748
+workspaceId: wk_XC848QbnVv
+folderId: fl_3jzjgd8Pte
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Obtains Master Public Key
+sortPriority: 0.0
+url: http://localhost:3000/api/certs/master
+urlParameters: []

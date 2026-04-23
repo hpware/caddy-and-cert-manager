@@ -1,7 +1,7 @@
 import { db } from "@/components/drizzle/db";
 import Client from "./client";
 import type { Metadata } from "next";
-import { certificates } from "@/components/drizzle/schema";
+import * as schema from "@/components/drizzle/schema";
 import { eq } from "drizzle-orm";
 
 export const metadata: Metadata = {
@@ -13,8 +13,8 @@ export default async function Page(props: {
   const { slug } = await props.params;
   const dbData = await db
     .select()
-    .from(certificates)
-    .where(eq(certificates.id, slug));
+    .from(schema.certificates)
+    .where(eq(schema.certificates.id, slug));
   if (dbData.length === 0) {
     return (
       <div className="flex flex-col items-center text-center justify-center absolute inset-0">

@@ -1,0 +1,13 @@
+type: folder
+model: folder
+id: fl_rEEuGb3Wnj
+createdAt: 2026-03-28T13:53:56.696539
+updatedAt: 2026-03-28T13:53:56.696539
+workspaceId: wk_XC848QbnVv
+folderId: fl_SR8wzAVEFb
+authentication: {}
+authenticationType: null
+description: ''
+headers: []
+name: Requires Bearer Token
+sortPriority: -1774706036695.0

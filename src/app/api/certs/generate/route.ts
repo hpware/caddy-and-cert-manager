@@ -4,6 +4,8 @@ import { db } from "@/components/drizzle/db";
 import * as schema from "@/components/drizzle/schema";
 import checkUserLoginStatus from "@/components/checkUserLoginStatusAPI";
 import randomString from "@/components/randomString";
+import { toASCII, toUnicode } from "punycode";
+import fs from "node:fs";
 
 export const POST = async (request: NextRequest) => {
   try {
@@ -25,40 +27,45 @@ export const POST = async (request: NextRequest) => {
     const formData = await request.formData();
     const { mode, Days } = Object.fromEntries(formData);
     if (mode === "easy") {
-      const { CN, OU, O, L, ST, C } = Object.fromEntries(formData);
+      const { subjectAltNameData, OU, O, L, ST, C } =
+        Object.fromEntries(formData);
       const saveUUID = crypto.randomUUID();
+      const SANArray = subjectAltNameData
+        .toString()
+        .split(",")
+        .map((i) => toASCII(i));
       const certCsrAndPrivateKey = await certTool.generateCSR(
-        saveUUID,
-        CN.toString(),
-        OU ? OU.toString() : "BunCCR",
-        O ? O.toString() : "BunCCR",
+        SANArray,
+        SANArray[0],
+        OU ? OU.toString() : "CertManager",
+        O ? O.toString() : "CertManager",
         L ? L.toString() : "Da-an District",
         ST ? ST.toString() : "Taipei City",
         C ? C.toString() : "TW",
       );
-
-      // save into db
-      await db
-        .insert(schema.certificates)
-        .values({
-          id: saveUUID,
-          name: CN.toString(),
-          privateKey: true,
-        })
-        .execute();
 
       const cert = await certTool.generateCertificate(
         certCsrAndPrivateKey.csr,
         Number(Days),
         saveUUID,
       );
-      const fullChainPath = await certTool.generateFullchain(saveUUID);
+
+      await db.insert(schema.certificates).values({
+        id: saveUUID,
+        name: toUnicode(SANArray[0]),
+        subjectAltNames:
+          SANArray.length > 0
+            ? SANArray.map((i) => toUnicode(i))
+            : [toUnicode(SANArray[0])],
+        containsPrivateKey: true,
+        certificatePublicKey: cert.pb,
+        certificatePrivateKey: certCsrAndPrivateKey.privateKey,
+      });
+
       return Response.json({
         ok: true,
         uuidSavePath: saveUUID,
-        certPublicKey: cert.pb,
-        certPrivateKey: certCsrAndPrivateKey.privateKey,
-        fullChainPath,
+        error: null,
       });
     } else if (mode === "csr") {
       const { CSR } = Object.fromEntries(formData);
@@ -68,33 +75,64 @@ export const POST = async (request: NextRequest) => {
         Number(Days),
         saveUUID,
       );
-      // save into db
-      await db
-        .insert(schema.certificates)
-        .values({
-          id: saveUUID,
-          name: generateCert.itemCN,
-          privateKey: false,
-        })
-        .execute();
+
+      await db.insert(schema.certificates).values({
+        id: saveUUID,
+        name: generateCert.itemCN,
+        subjectAltNames: [generateCert.itemCN],
+        containsPrivateKey: false,
+        certificatePrivateKey: "",
+        certificatePublicKey: generateCert.pb,
+      });
+
       const fullChainPath = await certTool.generateFullchain(saveUUID);
       return Response.json({
         ok: true,
         uuidSavePath: saveUUID,
-        certPublicKey: generateCert.pb,
-        certPrivateKey: null,
-        fullChainPath,
+        error: null,
+      });
+    } else if (mode === "advanced") {
+      const { Days, CN, subjectAltNameData, O, OU, L, ST, C, revokable } =
+        Object.fromEntries(formData);
+      if (!(CN.toString() && subjectAltNameData.toString())) {
+        throw new Error("CN and Subject Alternative Name are required fields.");
+      }
+      const saveUUID = crypto.randomUUID();
+      const certCsrAndPrivateKey = await certTool.generateCSR(
+        subjectAltNameData
+          .toString()
+          .split(",")
+          .map((i) => toUnicode(i)),
+        CN.toString(),
+        OU ? OU.toString() : "CertManager",
+        O ? O.toString() : "CertManager",
+        L ? L.toString() : "Da-an District",
+        ST ? ST.toString() : "Taipei City",
+        C ? C.toString() : "TW",
+      );
+      const generateCert = await certTool.generateCertificate(
+        certCsrAndPrivateKey.csr,
+        Number(Days),
+        saveUUID,
+      );
+      console.log(generateCert.pb);
+      await db.insert(schema.certificates).values({
+        id: saveUUID,
+        name: CN.toString(),
+        subjectAltNames: subjectAltNameData
+          .toString()
+          .split(",")
+          .map((i) => toUnicode(i)),
+        containsPrivateKey: true,
+        certificatePublicKey: generateCert.pb,
+        certificatePrivateKey: certCsrAndPrivateKey.privateKey,
+      });
+      return Response.json({
+        ok: true,
+        uuidSavePath: saveUUID,
         error: null,
       });
     }
-    return Response.json({
-      ok: false,
-      uuidSavePath: null,
-      certPublicKey: null,
-      certPrivateKey: null,
-      fullChainPath: null,
-      error: null,
-    });
   } catch (e) {
     const errorId = randomString();
     console.error(`[ERRID: ${errorId}] ${e}`);
@@ -102,9 +140,6 @@ export const POST = async (request: NextRequest) => {
       {
         ok: false,
         uuidSavePath: null,
-        certPublicKey: null,
-        certPrivateKey: null,
-        fullChainPath: null,
         error: `Internal Server Error, please view server logs for more info. ERRID: ${errorId}`,
       },
       { status: 500 },

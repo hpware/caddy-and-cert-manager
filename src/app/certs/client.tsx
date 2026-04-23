@@ -16,6 +16,7 @@ import { useMemo } from "react";
 import Table from "@/components/table";
 import {
   CalendarSearch,
+  ChartNetworkIcon,
   CloudSync,
   GlobeIcon,
   KeyRoundIcon,
@@ -693,6 +694,21 @@ export default function Page() {
             cell: ({ row }) => <span>{row.getValue("name")}</span>,
           },
           {
+            accessorKey: "subjectAltNames",
+            header: () => (
+              <div className="flex items-center gap-1">
+                <ChartNetworkIcon className="w-4 h-4" /> SANs
+              </div>
+            ),
+            cell: ({ row }) => (
+              <div className="flex flex-wrap gap-2 overflow-x-scroll max-h-10 max-w-120">
+                {row.original.subjectAltNames.flatMap((i) => (
+                  <Badge>{i}</Badge>
+                ))}
+              </div>
+            ),
+          },
+          {
             accessorKey: "created_at",
             header: () => (
               <div className="flex items-center gap-2">
@@ -706,15 +722,19 @@ export default function Page() {
             ),
           },
           {
-            accessorKey: "privateKey",
+            accessorKey: "containsPrivateKey",
             header: () => (
               <div className="flex items-center gap-2">
                 <KeyRoundIcon className="w-4 h-4" /> is CSR?
               </div>
             ),
             cell: ({ row }) => (
-              <span className={row.getValue("privateKey") ? "text-bold" : ""}>
-                {row.getValue("privateKey") ? "No" : "Yes"}
+              <span
+                className={
+                  row.getValue("containsPrivateKey") ? "text-bold" : ""
+                }
+              >
+                {row.getValue("containsPrivateKey") ? "No" : "Yes"}
               </span>
             ),
           },

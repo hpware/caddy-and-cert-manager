@@ -1,12 +1,13 @@
 {
   "name": "cert_signer",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "dstart": "bun run db:migrate && bun run start",
+    "dstart": "bun run db:migrate && bun run migrate:fs-to-db && bun run start",
+    "migrate:fs-to-db": "bun run ./migrate_fs_to_db/index.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
@@ -15,6 +16,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
+    "@better-auth/api-key": "^1.5.6",
     "@better-auth/sso": "^1.4.10",
     "@tabler/icons-react": "^3.36.0",
     "@tanstack/react-query": "^5.90.16",
@@ -29,6 +31,7 @@
     "next": "16.1.1",
     "pg": "^8.16.3",
     "prism-react-renderer": "^2.4.1",
+    "punycode": "^2.3.1",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",

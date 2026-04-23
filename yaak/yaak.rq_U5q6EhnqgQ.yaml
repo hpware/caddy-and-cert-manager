@@ -2,17 +2,26 @@ type: http_request
 model: http_request
 id: rq_U5q6EhnqgQ
 createdAt: 2025-12-26T12:54:52.120533
-updatedAt: 2026-01-04T14:40:21.891690
+updatedAt: 2026-03-26T14:13:00
 workspaceId: wk_XC848QbnVv
 folderId: fl_FNdwAbNkDS
 authentication: {}
 authenticationType: null
-body: {}
-bodyType: null
+body:
+  form:
+  - enabled: true
+    id: certForm
+    name: cert
+    value: ''
+bodyType: multipart/form-data
 description: ''
-headers: []
-method: GET
-name: Read file
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: hdrJson
+method: POST
+name: Revoke Certificate
 sortPriority: 1000.0
-url: http://localhost:3000/api/certs/get_file/5f7a8bf9-9747-49c5-9981-9b4554641077?type=public
+url: http://localhost:4000/api/revoke
 urlParameters: []

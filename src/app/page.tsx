@@ -1,6 +1,11 @@
-export const dynamic = "force-dynamic";
-import { redirect } from "next/navigation";
+import Client from "./certs/client";
 
-export default async function Page() {
-  redirect("/auth/register");
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Certificates | Home Core",
+};
+
+export default function Page() {
+  return <Client />;
 }

@@ -5,8 +5,8 @@ import randomString from "@/components/randomString";
 import { auth } from "@/components/auth";
 import { headers } from "next/headers";
 import { db } from "@/components/drizzle/db";
-import { sessionToks } from "@/components/drizzle/schema";
 import { eq } from "drizzle-orm";
+import { certificates } from "@/components/drizzle/schema";
 
 export const GET = async (
   request: NextRequest,
@@ -16,16 +16,7 @@ export const GET = async (
     const header = await headers();
     const params = new URLSearchParams(request.url.split("?")[1]);
     const checkAuthToken = params.get("auth_token");
-    if (checkAuthToken !== null) {
-      const checkAuthTokenAgainstDatabase = db
-        .select()
-        .from(sessionToks)
-        .where(eq(sessionToks.token, checkAuthToken));
-    } else {
-      const checkAuth = auth.api.getSession({
-        headers: header,
-      });
-    }
+
     const { slug } = await props.params;
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -40,30 +31,42 @@ export const GET = async (
       return new Response("Invalid type", { status: 400 });
     }
 
-    let getText: string;
+    const getText = await db
+      .select()
+      .from(certificates)
+      .where(eq(certificates.id, slug));
+    if (getText.length === 0) {
+      return new Response("Invalid slug", { status: 400 });
+    }
 
-    getText = await fs.promises.readFile(
-      `./certs/created/${slug}_${
+    /* type === "public"
+      ? "pub"
+      : type === "private"
+        ? "private_key"
+        : "fullchain"
+  } */
+    return new Response(
+      String(
         type === "public"
-          ? "pub"
+          ? getText[0].certificatePublicKey
           : type === "private"
-            ? "private_key"
-            : "fullchain"
-      }.pem`,
-      "utf8",
-    );
-
-    return new Response(getText, {
-      headers: {
-        "Content-Type":
-          get === "download" ? "application/octet-stream" : "text/plain",
-        ...(get === "download" && {
-          "Content-Disposition": `attachment; filename=${slug}_${
-            type === "public_fullchain" ? "fullchain" : type
-          }.pem`,
-        }),
+            ? getText[0].certificatePrivateKey
+            : await certTool.generateFullchainCertificate(
+                getText[0].certificatePublicKey,
+              ),
+      ),
+      {
+        headers: {
+          "Content-Type":
+            get === "download" ? "application/octet-stream" : "text/plain",
+          ...(get === "download" && {
+            "Content-Disposition": `attachment; filename=${slug}_${
+              type === "public_fullchain" ? "fullchain" : type
+            }.pem`,
+          }),
+        },
       },
-    });
+    );
   } catch (e) {
     const errorId = randomString();
     console.error(`[ERRID: ${errorId}] ${e}`);

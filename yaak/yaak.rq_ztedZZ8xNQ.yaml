@@ -1,0 +1,26 @@
+type: http_request
+model: http_request
+id: rq_ztedZZ8xNQ
+createdAt: 2026-03-28T13:54:43.207604
+updatedAt: 2026-03-28T14:00:18.522364
+workspaceId: wk_XC848QbnVv
+folderId: fl_3jzjgd8Pte
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "id": "00200000-0000-4000-8000-000000000000"
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: VeHtsXzAKm
+method: DELETE
+name: Delete certificate (requires user login)
+sortPriority: 1000.0
+url: http://localhost:3000/api/certs
+urlParameters: []

@@ -27,7 +27,14 @@ export const GET = async (req: NextRequest) => {
       .offset(offset)
       .limit(50);
     return Response.json({
-      data: dbResult,
+      data: dbResult.map((item) => ({
+        id: item.id,
+        name: item.name,
+        subjectAltNames: item.subjectAltNames,
+        containsPrivateKey: item.containsPrivateKey,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      })),
       nextOffset: offset + 50,
       error: null,
     });

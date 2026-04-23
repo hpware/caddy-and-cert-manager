@@ -2,13 +2,14 @@ type: workspace
 model: workspace
 id: wk_XC848QbnVv
 createdAt: 2025-12-25T14:56:43.039211
-updatedAt: 2025-12-25T14:56:43.039214
+updatedAt: 2026-03-26T06:13:02.957640
 authentication: {}
 authenticationType: null
-description: ""
+description: ''
 headers: []
-name: cert-signer
+name: Certificate Manager
 encryptionKeyChallenge: null
 settingValidateCertificates: true
 settingFollowRedirects: true
 settingRequestTimeout: 0
+settingDnsOverrides: []

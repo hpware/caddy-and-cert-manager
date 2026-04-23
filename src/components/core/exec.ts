@@ -15,6 +15,9 @@ export const spawnWithInput = (
     child.stdout.on("data", (data: any) => (stdout += data));
     child.stderr.on("data", (data: any) => (stderr += data));
 
+    child.stdin.write(input);
+    child.stdin.end();
+
     child.on("close", (code: any) => {
       if (code !== 0) {
         reject(new Error(`Process exited with code ${code}: ${stderr}`));
@@ -22,8 +25,5 @@ export const spawnWithInput = (
         resolve({ stdout, stderr });
       }
     });
-
-    child.stdin.write(input);
-    child.stdin.end();
   });
 };

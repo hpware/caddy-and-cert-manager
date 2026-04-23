@@ -2,58 +2,30 @@ type: http_request
 model: http_request
 id: rq_fpaw5mnua3
 createdAt: 2025-12-26T12:36:48.370892
-updatedAt: 2025-12-26T12:39:30.157157
+updatedAt: 2026-03-26T14:13:00
 workspaceId: wk_XC848QbnVv
 folderId: fl_e954ihBwCE
 authentication: {}
 authenticationType: null
 body:
   form:
-    - enabled: true
-      id: pKFIJfe9yb
-      name: mode
-      value: generate
-    - enabled: true
-      id: W7wKWuZFri
-      name: Days
-      value: "7260"
-    - enabled: true
-      id: DZfVrSgXQj
-      name: CN
-      value: test.net
-    - enabled: true
-      id: jgXpviA6mt
-      name: OU
-      value: Yaak
-    - enabled: true
-      id: wWN6jckmjE
-      name: O
-      value: Yaak
-    - enabled: true
-      id: Sk8ExvDv32
-      name: L
-      value: Sin-yi District
-    - enabled: true
-      id: 9hmN78RnTM
-      name: ST
-      value: Taipei City
-    - enabled: true
-      id: bVxufC48tE
-      name: C
-      value: TW
-    - enabled: true
-      id: fIHtsIVaYG
-      name: ""
-      value: ""
-bodyType: multipart/form-data
-description: ""
-headers:
   - enabled: true
-    name: Content-Type
-    value: multipart/form-data
-    id: MdhGnwnDnK
+    id: pKFIJfe9yb
+    name: csr
+    value: ''
+  - enabled: true
+    id: W7wKWuZFri
+    name: days
+    value: '200'
+bodyType: multipart/form-data
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: MdhGnwnDnK
 method: POST
-name: Request with more data
+name: Sign CSR
 sortPriority: 1000.0
-url: http://localhost:3000/api/certs/generate
+url: http://localhost:4000/api/sign
 urlParameters: []
